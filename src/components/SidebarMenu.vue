@@ -4,6 +4,15 @@ import type { MenuItem } from 'primevue/menuitem'
 
 const items: MenuItem[] = [
   {
+    label: 'Basics',
+    items: [
+      {
+        label: 'Color',
+        url: '/color',
+      },
+    ],
+  },
+  {
     label: 'Shaping Functions',
     items: [
       {

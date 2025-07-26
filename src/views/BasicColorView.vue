@@ -6,7 +6,7 @@ import { GUI } from 'lil-gui'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
-let scene: ShapingFunctionsScene
+let scene: BasicColorScene
 
 const vertexShader = `
 void main() {
@@ -18,31 +18,14 @@ void main() {
 `
 
 const fragmentShader = `
-uniform vec2 u_resolution;
-uniform vec3 u_color;
-uniform float u_stroke;
-
-// Plot a line on Y using a value between 0.0-1.0
-float plot(vec2 st) {
-    return smoothstep(u_stroke, 0.0, abs(st.y - st.x));
-}
+uniform vec3 color;
 
 void main() {
-    vec2 st = gl_FragCoord.xy/u_resolution;
-
-    float y = st.x;
-
-    vec3 color = vec3(y);
-
-    // Plot a line
-    float pct = plot(st);
-    color = (1.0-pct)*color+pct*vec3(u_color);
-
-    gl_FragColor = vec4(color,1.0);
+	  gl_FragColor = vec4(color, 1.0);
 }
 `
 
-class ShapingFunctionsScene implements Scene {
+class BasicColorScene implements Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
   uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
@@ -55,8 +38,7 @@ class ShapingFunctionsScene implements Scene {
 
   gui = new GUI()
   uiState = {
-    u_stroke: 0.02,
-    u_color: [0.0, 1.0, 0.0],
+    color: [1.0, 0.0, 0.0],
   }
 
   constructor() {}
@@ -97,9 +79,9 @@ class ShapingFunctionsScene implements Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth, window.innerHeight] },
-      u_stroke: { value: this.uiState.u_stroke },
-      u_color: { value: this.uiState.u_color },
+      color: {
+        value: this.uiState.color,
+      },
     }
     const material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
@@ -115,9 +97,7 @@ class ShapingFunctionsScene implements Scene {
   }
 
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
-    this.uniforms.u_stroke.value = this.uiState.u_stroke
-    this.uniforms.u_color.value = this.uiState.u_color
+    this.uniforms.color.value = this.uiState.color;
 
     this.renderer.render(this.scene, this.camera)
   }
@@ -127,8 +107,7 @@ class ShapingFunctionsScene implements Scene {
   }
 
   private initDebugUI() {
-    this.gui.add(this.uiState, 'u_stroke', 0.001, 4.0, 0.001)
-    this.gui.addColor(this.uiState, 'u_color')
+    this.gui.addColor(this.uiState, 'color')
   }
 }
 
@@ -137,7 +116,7 @@ onMounted(() => {
     return
   }
 
-  scene = new ShapingFunctionsScene()
+  scene = new BasicColorScene()
   scene.init()
 })
 
