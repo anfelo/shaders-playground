@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LinearPlotView from '@/views/LinearPlotView.vue'
 import BasicColorView from '@/views/BasicColorView.vue'
+import ExponentialPlotView from '@/views/ExponentialPlotView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/linear-plot',
       name: 'linear-plot',
       component: LinearPlotView,
+    },
+    {
+      path: '/exponential-plot',
+      name: 'exponential-plot',
+      component: ExponentialPlotView,
     },
   ],
 })

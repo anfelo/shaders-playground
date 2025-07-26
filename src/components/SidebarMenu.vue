@@ -19,6 +19,10 @@ const items: MenuItem[] = [
         label: 'Linear Plot',
         url: '/linear-plot',
       },
+      {
+        label: 'Exponential Plot',
+        url: '/exponential-plot',
+      },
     ],
   },
 ]
