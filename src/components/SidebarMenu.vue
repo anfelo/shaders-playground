@@ -23,6 +23,10 @@ const items: MenuItem[] = [
         label: 'Exponential Plot',
         url: '/exponential-plot',
       },
+      {
+        label: 'Smooth Step Plot',
+        url: '/smooth-step-plot',
+      },
     ],
   },
 ]
