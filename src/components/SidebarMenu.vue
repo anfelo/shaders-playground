@@ -47,6 +47,10 @@ const items: MenuItem[] = [
         label: 'Rectangle Shape',
         url: '/rectangle-shape',
       },
+      {
+        label: 'Circle Shape',
+        url: '/circle-shape',
+      },
     ],
   },
 ]
