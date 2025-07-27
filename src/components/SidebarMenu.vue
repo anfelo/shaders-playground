@@ -10,6 +10,14 @@ const items: MenuItem[] = [
         label: 'Color',
         url: '/color',
       },
+      {
+        label: 'Color Mix',
+        url: '/color-mix',
+      },
+      {
+        label: 'Multi Color Mix',
+        url: '/multi-color-mix',
+      },
     ],
   },
   {

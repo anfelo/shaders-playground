@@ -4,6 +4,8 @@ import BasicColorView from '@/views/BasicColorView.vue'
 import ExponentialPlotView from '@/views/ExponentialPlotView.vue'
 import SmoothStepPlotView from '@/views/SmoothStepPlotView.vue'
 import SinePlotView from '@/views/SinePlotView.vue'
+import ColorMixView from '@/views/ColorMixView.vue'
+import MultiColorMixView from '@/views/MultiColorMixView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,6 +14,16 @@ const router = createRouter({
       path: '/color',
       name: 'color',
       component: BasicColorView,
+    },
+    {
+      path: '/color-mix',
+      name: 'color-mix',
+      component: ColorMixView,
+    },
+    {
+      path: '/multi-color-mix',
+      name: 'multi-color-mix',
+      component: MultiColorMixView,
     },
     {
       path: '/linear-plot',
