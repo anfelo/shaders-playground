@@ -27,6 +27,10 @@ const items: MenuItem[] = [
         label: 'Smooth Step Plot',
         url: '/smooth-step-plot',
       },
+      {
+        label: 'Sine Plot',
+        url: '/sine-plot',
+      },
     ],
   },
 ]
