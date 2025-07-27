@@ -51,6 +51,10 @@ const items: MenuItem[] = [
         label: 'Circle Shape',
         url: '/circle-shape',
       },
+      {
+        label: 'Polar Shapes',
+        url: '/polar-shapes',
+      },
     ],
   },
 ]
