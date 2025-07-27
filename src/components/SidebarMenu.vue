@@ -18,6 +18,10 @@ const items: MenuItem[] = [
         label: 'Multi Color Mix',
         url: '/multi-color-mix',
       },
+      {
+        label: 'Color Transition',
+        url: '/color-transition',
+      },
     ],
   },
   {
@@ -38,6 +42,10 @@ const items: MenuItem[] = [
       {
         label: 'Sine Plot',
         url: '/sine-plot',
+      },
+      {
+        label: 'Rectangle Shape',
+        url: '/rectangle-shape',
       },
     ],
   },
