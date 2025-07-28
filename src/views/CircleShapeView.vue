@@ -21,6 +21,7 @@ const fragmentShader = `
 uniform vec2 u_resolution;
 uniform vec3 u_color;
 uniform float u_smoothness;
+uniform float u_radius;
 
 float circle(in vec2 _st, in float _radius, in float _smoothness){
     vec2 dist = _st-vec2(0.5);
@@ -34,7 +35,7 @@ void main() {
     vec2 st = gl_FragCoord.xy/u_resolution;
     float pct = 0.0;
 
-    vec3 color = vec3(circle(st,0.828,u_smoothness)+u_color);
+    vec3 color = vec3(circle(st,u_radius,u_smoothness)+u_color);
 
     gl_FragColor = vec4(color,1.0);
 }
@@ -55,6 +56,7 @@ class CircleShapeScene implements Scene {
   uiState = {
     u_color: [0.0, 1.0, 0.0],
     u_smoothness: 0.01,
+    u_radius: 0.821,
   }
 
   constructor() {}
@@ -98,6 +100,7 @@ class CircleShapeScene implements Scene {
       u_resolution: { value: [window.innerWidth, window.innerHeight] },
       u_color: { value: this.uiState.u_color },
       u_smoothness: { value: this.uiState.u_smoothness },
+      u_radius: { value: this.uiState.u_radius },
     }
     const material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
@@ -116,6 +119,7 @@ class CircleShapeScene implements Scene {
     this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_color.value = this.uiState.u_color
     this.uniforms.u_smoothness.value = this.uiState.u_smoothness
+    this.uniforms.u_radius.value = this.uiState.u_radius
 
     this.renderer.render(this.scene, this.camera)
   }
@@ -125,6 +129,7 @@ class CircleShapeScene implements Scene {
   }
 
   private initDebugUI() {
+    this.gui.add(this.uiState, 'u_radius', 0.1, 1.0, 0.01)
     this.gui.add(this.uiState, 'u_smoothness', 0, 0.5, 0.01)
     this.gui.addColor(this.uiState, 'u_color')
   }
