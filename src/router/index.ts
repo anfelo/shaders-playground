@@ -10,6 +10,8 @@ import ColorTransitionView from '@/views/ColorTransitionView.vue'
 import RectangleShapeView from '@/views/RectangleShapeView.vue'
 import CircleShapeView from '@/views/CircleShapeView.vue'
 import PolarShapesView from '@/views/PolarShapesView.vue'
+import TriangleShapeView from '@/views/TriangleShapeView.vue'
+import GridView from '@/views/GridView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +70,16 @@ const router = createRouter({
       path: '/polar-shapes',
       name: 'polar-shapes',
       component: PolarShapesView,
+    },
+    {
+      path: '/triangle-shape',
+      name: 'triangle-shape',
+      component: TriangleShapeView,
+    },
+    {
+      path: '/grid',
+      name: 'grid',
+      component: GridView,
     },
   ],
 })
