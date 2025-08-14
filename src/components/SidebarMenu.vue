@@ -43,6 +43,11 @@ const items: MenuItem[] = [
         label: 'Sine Plot',
         url: '/sine-plot',
       },
+    ],
+  },
+  {
+    label: 'Shapes',
+    items: [
       {
         label: 'Rectangle Shape',
         url: '/rectangle-shape',
@@ -62,6 +67,15 @@ const items: MenuItem[] = [
       {
         label: 'Polar Shapes',
         url: '/polar-shapes',
+      },
+    ],
+  },
+  {
+    label: 'Transforms',
+    items: [
+      {
+        label: 'Translate',
+        url: '/translate',
       },
     ],
   },

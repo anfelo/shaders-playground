@@ -12,6 +12,7 @@ import CircleShapeView from '@/views/CircleShapeView.vue'
 import PolarShapesView from '@/views/PolarShapesView.vue'
 import TriangleShapeView from '@/views/TriangleShapeView.vue'
 import GridView from '@/views/GridView.vue'
+import TranslateView from '@/views/TranslateView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -80,6 +81,11 @@ const router = createRouter({
       path: '/grid',
       name: 'grid',
       component: GridView,
+    },
+    {
+      path: '/translate',
+      name: 'translate',
+      component: TranslateView,
     },
   ],
 })
