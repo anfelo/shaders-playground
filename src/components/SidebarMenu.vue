@@ -77,6 +77,10 @@ const items: MenuItem[] = [
         label: 'Translate',
         url: '/translate',
       },
+      {
+        label: 'Rotate',
+        url: '/rotate',
+      },
     ],
   },
 ]
