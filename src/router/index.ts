@@ -16,6 +16,7 @@ import TranslateView from '@/views/TranslateView.vue'
 import RotateView from '@/views/RotateView.vue'
 import ScaleView from '@/views/ScaleView.vue'
 import CirclesView from '@/views/CirclesView.vue'
+import DancingTilesView from '@/views/DancingTilesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -104,6 +105,11 @@ const router = createRouter({
       path: '/circles',
       name: 'circles',
       component: CirclesView,
+    },
+    {
+      path: '/dancing-tiles',
+      name: 'dancing-tiles',
+      component: DancingTilesView,
     },
   ],
 })

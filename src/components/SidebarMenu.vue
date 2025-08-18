@@ -94,6 +94,10 @@ const items: MenuItem[] = [
         label: 'Circles',
         url: '/circles',
       },
+      {
+        label: 'Dancing Tiles',
+        url: '/dancing-tiles',
+      },
     ],
   },
 ]
