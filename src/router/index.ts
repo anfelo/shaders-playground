@@ -14,6 +14,8 @@ import TriangleShapeView from '@/views/TriangleShapeView.vue'
 import GridView from '@/views/GridView.vue'
 import TranslateView from '@/views/TranslateView.vue'
 import RotateView from '@/views/RotateView.vue'
+import ScaleView from '@/views/ScaleView.vue'
+import CirclesView from '@/views/CirclesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -92,6 +94,16 @@ const router = createRouter({
       path: '/rotate',
       name: 'rotate',
       component: RotateView,
+    },
+    {
+      path: '/scale',
+      name: 'scale',
+      component: ScaleView,
+    },
+    {
+      path: '/circles',
+      name: 'circles',
+      component: CirclesView,
     },
   ],
 })

@@ -81,6 +81,19 @@ const items: MenuItem[] = [
         label: 'Rotate',
         url: '/rotate',
       },
+      {
+        label: 'Scale',
+        url: '/scale',
+      },
+    ],
+  },
+  {
+    label: 'Patterns',
+    items: [
+      {
+        label: 'Circles',
+        url: '/circles',
+      },
     ],
   },
 ]
