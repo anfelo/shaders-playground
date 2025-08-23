@@ -21,7 +21,7 @@ import SidebarMenu from '@/components/SidebarMenu.vue'
   position: fixed;
   top: 0;
   left: 0;
-  width: 200px;
+  width: 250px;
   padding: 10px;
 }
 </style>

@@ -17,6 +17,8 @@ import RotateView from '@/views/RotateView.vue'
 import ScaleView from '@/views/ScaleView.vue'
 import CirclesView from '@/views/CirclesView.vue'
 import DancingTilesView from '@/views/DancingTilesView.vue'
+import NoiseView from '@/views/NoiseView.vue'
+import MosaicView from '@/views/MosaicView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -110,6 +112,16 @@ const router = createRouter({
       path: '/dancing-tiles',
       name: 'dancing-tiles',
       component: DancingTilesView,
+    },
+    {
+      path: '/noice',
+      name: 'noice',
+      component: NoiseView,
+    },
+    {
+      path: '/mosaic',
+      name: 'mosaic',
+      component: MosaicView,
     },
   ],
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Menu from 'primevue/menu'
+import PanelMenu from 'primevue/panelmenu'
 import type { MenuItem } from 'primevue/menuitem'
 
 const items: MenuItem[] = [
@@ -100,11 +100,24 @@ const items: MenuItem[] = [
       },
     ],
   },
+  {
+    label: 'Random',
+    items: [
+      {
+        label: 'Noice',
+        url: '/noice',
+      },
+      {
+        label: 'Mosaic',
+        url: '/mosaic',
+      },
+    ],
+  },
 ]
 </script>
 
 <template>
-  <Menu :model="items" />
+  <PanelMenu :model="items" />
 </template>
 
 <style scoped></style>
