@@ -101,6 +101,15 @@ const items: MenuItem[] = [
     ],
   },
   {
+    label: 'SDFs & Simple Shapes',
+    items: [
+      {
+        label: 'Simple Shapes',
+        url: '/simple-shapes',
+      },
+    ],
+  },
+  {
     label: 'Random',
     items: [
       {
