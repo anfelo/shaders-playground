@@ -107,6 +107,10 @@ const items: MenuItem[] = [
         label: 'Simple Shapes',
         url: '/simple-shapes',
       },
+      {
+        label: 'Boolean Operations',
+        url: '/boolean-operations',
+      },
     ],
   },
   {

@@ -20,6 +20,7 @@ import DancingTilesView from '@/views/DancingTilesView.vue'
 import NoiseView from '@/views/NoiseView.vue'
 import MosaicView from '@/views/MosaicView.vue'
 import SimpleShapesView from '@/views/SimpleShapesView.vue'
+import BooleanOperationsView from '@/views/BooleanOperationsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -128,6 +129,11 @@ const router = createRouter({
       path: '/simple-shapes',
       name: 'simple-shapes',
       component: SimpleShapesView,
+    },
+    {
+      path: '/boolean-operations',
+      name: 'boolean-operations',
+      component: BooleanOperationsView,
     },
   ],
 })
