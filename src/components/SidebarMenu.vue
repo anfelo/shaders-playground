@@ -111,6 +111,10 @@ const items: MenuItem[] = [
         label: 'Boolean Operations',
         url: '/boolean-operations',
       },
+      {
+        label: 'Cloudy Day',
+        url: '/cloudy-day',
+      },
     ],
   },
   {

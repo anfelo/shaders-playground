@@ -21,6 +21,7 @@ import NoiseView from '@/views/NoiseView.vue'
 import MosaicView from '@/views/MosaicView.vue'
 import SimpleShapesView from '@/views/SimpleShapesView.vue'
 import BooleanOperationsView from '@/views/BooleanOperationsView.vue'
+import CloudyDayView from '@/views/CloudyDayView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -134,6 +135,11 @@ const router = createRouter({
       path: '/boolean-operations',
       name: 'boolean-operations',
       component: BooleanOperationsView,
+    },
+    {
+      path: '/cloudy-day',
+      name: 'cloudy-day',
+      component: CloudyDayView,
     },
   ],
 })
