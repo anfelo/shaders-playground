@@ -212,7 +212,7 @@ class SimpleShapesScene implements Scene {
       u_resolution: { value: [window.innerWidth, window.innerHeight] },
       u_color: { value: this.uiState.u_color },
       u_shape: { value: this.uiState.u_shape },
-      u_pos: { value: this.uiState.u_pos },
+      u_pos: { value: [this.uiState.u_pos_x, this.uiState.u_pos_y] },
       u_rot: { value: this.uiState.u_rot },
       u_scale: { value: this.uiState.u_scale },
     }
