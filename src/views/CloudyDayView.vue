@@ -48,11 +48,42 @@ float remap(float v, float in_min, float in_max, float out_min, float out_max) {
 }
 
 vec3 background_color() {
-    return mix(
+    vec3 morning = mix(
+        vec3(0.44, 0.64, 0.84),
+        vec3(0.34, 0.51, 0.94),
+        smoothstep(0.0, 1.0, pow(v_uvs.x * v_uvs.y, 0.5))
+    );
+    vec3 midday = mix(
         vec3(0.42, 0.58, 0.75),
         vec3(0.36, 0.46, 0.82),
         smoothstep(0.0, 1.0, pow(v_uvs.x * v_uvs.y, 0.5))
     );
+    vec3 evening = mix(
+        vec3(0.82, 0.51, 0.25),
+        vec3(0.88, 0.71, 0.39),
+        smoothstep(0.0, 1.0, pow(v_uvs.x * v_uvs.y, 0.5))
+    );
+    vec3 night = mix(
+        vec3(0.07, 0.1, 0.19),
+        vec3(0.19, 0.2, 0.29),
+        smoothstep(0.0, 1.0, pow(v_uvs.x * v_uvs.y, 0.5))
+    );
+
+    float day_length = 20.0;
+    float day_time = mod(u_time, day_length);
+
+    vec3 color;
+    if (day_time < day_length * 0.25) {
+      color = mix(morning, midday, smoothstep(0.0, day_length * 0.25, day_time));
+    } else if (day_time < day_length * 0.5) {
+      color = mix(midday, evening, smoothstep(day_length * 0.25, day_length * 0.5, day_time));
+    } else if (day_time < day_length * 0.75) {
+      color = mix(evening, night, smoothstep(day_length * 0.5, day_length * 0.75, day_time));
+    } else {
+      color = mix(night, morning, smoothstep(day_length * 0.75, day_length, day_time));
+    }
+
+    return color;
 }
 
 vec3 draw_grid(vec3 color, vec3 line_color, float cell_spacing, float line_width) {
@@ -140,15 +171,32 @@ float sdf_cloud(vec2 pixel_coords) {
     return op_union(puff1, op_union(puff2, puff3));
 }
 
+float hash(vec2 v) {
+    float t = dot(v, vec2(36.5323, 73.945));
+    return sin(t);
+}
+
 void main(){
-    vec2 pixel_coords = (v_uvs - 0.5) * u_resolution;
+    vec2 pixel_coords = v_uvs * u_resolution;
 
     vec3 color = background_color();
 
-    float cloud_shadow = sdf_cloud(pixel_coords + vec2(25.0)) - 40.0;
-    float cloud = sdf_cloud(pixel_coords);
-    color = mix(color, vec3(0.0), 0.5 * smoothstep(0.0, -100.0, cloud_shadow));
-    color = mix(vec3(1.0), color, smoothstep(0.0, 1.0, cloud));
+    const float NUM_CLOUDS = 8.0;
+    for (float i = 0.0; i < NUM_CLOUDS; i += 1.0) {
+        float size = mix(2.0, 1.0, (i / NUM_CLOUDS) + 0.1 * hash(vec2(i)));
+        float speed = size * 0.25;
+
+        vec2 offset = vec2(i * 200.0 + u_time * 100.0 * speed, 200.0 * hash(vec2(i)));
+        vec2 pos = pixel_coords - offset;
+
+        pos = mod(pos, u_resolution);
+        pos = pos - u_resolution * 0.5;
+
+        float cloud_shadow = sdf_cloud(pos * size + vec2(25.0)) - 40.0;
+        float cloud = sdf_cloud(pos * size);
+        color = mix(color, vec3(0.0), 0.5 * smoothstep(0.0, -100.0, cloud_shadow));
+        color = mix(vec3(1.0), color, smoothstep(0.0, 1.0, cloud));
+    }
 
     gl_FragColor = vec4(color, 1.0);
 }
