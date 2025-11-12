@@ -47,7 +47,7 @@ float remap(float v, float in_min, float in_max, float out_min, float out_max) {
     return mix(out_min, out_max, t);
 }
 
-vec3 background_color() {
+vec3 background_color(float day_time) {
     vec3 morning = mix(
         vec3(0.44, 0.64, 0.84),
         vec3(0.34, 0.51, 0.94),
@@ -70,7 +70,6 @@ vec3 background_color() {
     );
 
     float day_length = 20.0;
-    float day_time = mod(u_time, day_length);
 
     vec3 color;
     if (day_time < day_length * 0.25) {
@@ -171,16 +170,152 @@ float sdf_cloud(vec2 pixel_coords) {
     return op_union(puff1, op_union(puff2, puff3));
 }
 
+float sdf_moon(vec2 pixel_coords) {
+    float d = op_subtraction(sdf_circle(pixel_coords + vec2(50.0, 0.0), 80.0),
+    sdf_circle(pixel_coords, 80.0));
+    return d;
+}
+
+float sdf_star(in vec2 p, in float r, in int n, in float m) {
+    // next 4 lines can be precomputed for a given shape
+    float an = 3.141593/float(n);
+    float en = 3.141593/m;  // m is between 2 and n
+    vec2  acs = vec2(cos(an),sin(an));
+    vec2  ecs = vec2(cos(en),sin(en)); // ecs=vec2(0,1) for regular polygon
+
+    float bn = mod(atan(p.x,p.y),2.0*an) - an;
+    p = length(p)*vec2(cos(bn),abs(sin(bn)));
+    p -= r*acs;
+    p += ecs*clamp( -dot(p,ecs), 0.0, r*acs.y/ecs.y);
+    return length(p)*sign(p.x);
+}
+
 float hash(vec2 v) {
     float t = dot(v, vec2(36.5323, 73.945));
     return sin(t);
 }
 
+float saturate(float t) {
+    return clamp(t, 0.0, 1.0);
+}
+
+float ease_out(float x, float p) {
+    return 1.0 - pow(1.0 - x, p);
+}
+
+float ease_out_bounce(float x) {
+    const float n1 = 7.5625;
+    const float d1 = 2.75;
+
+    if (x < 1.0 / d1) {
+        return n1 * x * x;
+    } else if (x < 2.0 / d1) {
+        x -= 1.5 / d1;
+        return n1 * x * x + 0.75;
+    } else if (x < 2.5 / d1) {
+        x -= 2.25 / d1;
+        return n1 * x * x + 0.9375;
+    } else {
+        x -= 2.625 / d1;
+        return n1 * x * x + 0.984375;
+    }
+}
+
 void main(){
     vec2 pixel_coords = v_uvs * u_resolution;
 
-    vec3 color = background_color();
+    float day_length = 20.0;
+    float day_time = mod(u_time + 8.0, day_length);
 
+    vec3 color = background_color(day_time);
+
+    // SUN
+    if (day_time < day_length * 0.75) {
+        float t = saturate(inverse_lerp(day_time, 0.0, 1.0));
+        vec2 offset = vec2(400.0, u_resolution.y * 0.8) + mix(vec2(0.0, 400.0), vec2(0.0), ease_out(t,
+        5.0));
+
+        if (day_time > day_length * 0.5) {
+            t = saturate(inverse_lerp(day_time, day_length * 0.5, day_length * 0.5 + 1.0));
+            offset = vec2(400.0, u_resolution.y * 0.8) + mix(vec2(0.0), vec2(0.0, 400.0), t);
+        }
+
+        vec2 sun_pos = pixel_coords - offset;
+
+        float sun = sdf_circle(sun_pos, 100.0);
+        color = mix(vec3(0.84, 0.62, 0.26), color, smoothstep(0.0, 2.0, sun));
+
+        float s = max(0.001, sun);
+        float p = saturate(exp(-0.001 * s * s));
+        color += 0.5 * mix(vec3(0.0), vec3(0.9, 0.85, 0.47), p);
+    }
+
+    // MOON
+    if (day_time > day_length * 0.5) {
+        float t = saturate(inverse_lerp(day_time, day_length * 0.5, day_length * 0.5 + 1.5));
+        vec2 offset = u_resolution * 0.8 + mix(vec2(0.0, 400.0), vec2(0.0), ease_out_bounce(t));
+
+        if (day_time > day_length * 0.9) {
+            t = saturate(inverse_lerp(day_time, day_length * 0.9, day_length * 0.95));
+            offset = u_resolution * 0.8 + mix(vec2(0.0), vec2(0.0, 400.0), t);
+        }
+
+        vec2 moon_shadow_pos = pixel_coords - offset + vec2(15.0);
+        moon_shadow_pos = rotate_2D(3.14159 * -0.2) * moon_shadow_pos;
+
+        float moon_shadow = sdf_moon(moon_shadow_pos);
+        color = mix(vec3(0.0), color, smoothstep(-40.0, 10.0, moon_shadow));
+
+        vec2 moon_pos = pixel_coords - offset;
+        moon_pos = rotate_2D(3.14159 * -0.2) * moon_pos;
+
+        float moon = sdf_moon(moon_pos);
+        color = mix(vec3(1.0), color, smoothstep(0.0, 2.0, moon));
+
+        float moon_glow = sdf_moon(moon_pos);
+        color += 0.1 * mix(vec3(1.0), vec3(0.0), smoothstep(-10.0, 15.0, moon_glow));
+    }
+
+    // STARS
+    const float NUM_STARS = 15.0;
+    for (float i = 0.0; i < NUM_STARS; i += 1.0) {
+        float hash_sample = hash(vec2(i * 13.0)) * 0.5 + 0.5;
+
+        float t = saturate(inverse_lerp(
+            day_time + hash_sample * 0.5,
+            day_length * 0.5,
+            day_length * 0.5 + 1.5
+        ));
+
+        float fade = 0.0;
+        if (day_time > day_length * 0.9) {
+            fade = saturate(inverse_lerp(
+                day_time - hash_sample * 0.25,
+                day_length * 0.9,
+                day_length * 0.95
+            ));
+        }
+
+        float size = mix(2.0, 1.0, hash(vec2(i, i + 1.0)));
+        vec2 offset = vec2(i * 100.0, 0.0) + 150.0 * hash(vec2(i));
+        offset += mix(vec2(0.0, 600.0), vec2(0.0), ease_out_bounce(t));
+
+        float rot = mix(-3.14159, 2.14159, hash_sample);
+
+        vec2 pos = pixel_coords - offset;
+        pos.x = mod(pos.x, u_resolution.x);
+        pos = pos - u_resolution * vec2(0.5, 0.75);
+        pos = rotate_2D(rot) * pos;
+        pos *= size;
+
+        float star = sdf_star(pos, 20.0, 5, 3.0);
+        vec3 star_color = mix(vec3(1.0), color, smoothstep(0.0, 2.0, star));
+        star_color += mix(0.2, 0.0, pow(smoothstep(-5.0, 15.0, star), 0.25));
+
+        color = mix(star_color, color, fade);
+    }
+
+    // CLOUDS
     const float NUM_CLOUDS = 8.0;
     for (float i = 0.0; i < NUM_CLOUDS; i += 1.0) {
         float size = mix(2.0, 1.0, (i / NUM_CLOUDS) + 0.1 * hash(vec2(i)));
