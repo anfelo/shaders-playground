@@ -20,9 +20,10 @@ void main() {
 const fragmentShader = `
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform vec2 u_mouse;
 
 float random (vec2 st) {
-    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    return fract(sin(dot(st.xy, u_mouse)) * 43758.5453123);
 }
 
 void main() {
@@ -38,6 +39,7 @@ class NoiseScene implements Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
   uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
+  mouse = new THREE.Vector2(0.0, 0.0)
 
   playgroundEl = elementRef.value
   renderer = new THREE.WebGLRenderer()
@@ -63,6 +65,7 @@ class NoiseScene implements Scene {
 
     // Remove event listeners
     window.removeEventListener('resize', this.onWindowResize)
+    document.removeEventListener('mousemove', this.onMouseDown, false)
   }
 
   async init(): Promise<void> {
@@ -75,6 +78,7 @@ class NoiseScene implements Scene {
     this.playgroundEl.appendChild(this.renderer.domElement)
 
     window.addEventListener('resize', () => this.onWindowResize(), false)
+    document.addEventListener('mousemove', event => this.onMouseDown(event), false)
 
     this.initDebugUI()
 
@@ -90,6 +94,7 @@ class NoiseScene implements Scene {
     this.uniforms = {
       u_resolution: { value: [window.innerWidth, window.innerHeight] },
       u_time: { value: this.uiState.u_time },
+      u_mouse: { value: [0.0, 0.0] },
     }
     const material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
@@ -109,12 +114,18 @@ class NoiseScene implements Scene {
 
     this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_time.value = elapsedTime
+    this.uniforms.u_mouse.value = this.mouse
 
     this.renderer.render(this.scene, this.camera)
   }
 
   private onWindowResize() {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
+  }
+
+  private onMouseDown(event: MouseEvent) {
+    this.mouse.x = event.clientX
+    this.mouse.y = event.clientY
   }
 
   private initDebugUI() {}
