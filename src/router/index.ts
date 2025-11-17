@@ -25,6 +25,7 @@ import CloudyDayView from '@/views/CloudyDayView.vue'
 import BilinearFiltering from '@/views/BilinearFiltering.vue'
 import PerlinAndSimplexView from '@/views/PerlinAndSimplexView.vue'
 import TurbulentWaterView from '@/views/TurbulentWaterView.vue'
+import LandscapeView from '@/views/LandscapeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -143,6 +144,11 @@ const router = createRouter({
       path: '/turbulent-water',
       name: 'turbulent-water',
       component: TurbulentWaterView,
+    },
+    {
+      path: '/landscape',
+      name: 'landscape',
+      component: LandscapeView,
     },
     {
       path: '/simple-shapes',

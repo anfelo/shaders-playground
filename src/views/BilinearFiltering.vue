@@ -55,7 +55,7 @@ vec4 noise(vec2 coords) {
     return vec4(result);
 }
 
-vec4 filtered_sample(sample2D target, vec2 coords) {
+vec4 filtered_sample(sampler2D target, vec2 coords) {
     vec2 tex_size = vec2(2.0);
     vec2 pc = coords * tex_size - 0.5;
     vec2 base = floor(pc) + 0.5;

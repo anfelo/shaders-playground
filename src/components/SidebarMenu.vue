@@ -140,6 +140,10 @@ const items: MenuItem[] = [
         label: 'Turbulent Water',
         url: '/turbulent-water',
       },
+      {
+        label: 'Landscape',
+        url: '/landscape',
+      },
     ],
   },
 ]
