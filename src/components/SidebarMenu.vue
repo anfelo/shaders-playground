@@ -121,12 +121,20 @@ const items: MenuItem[] = [
     label: 'Random',
     items: [
       {
-        label: 'Noice',
-        url: '/noice',
+        label: 'Noise',
+        url: '/noise',
       },
       {
         label: 'Mosaic',
         url: '/mosaic',
+      },
+      {
+        label: 'Bilinear Filtering',
+        url: '/bilinear-filtering',
+      },
+      {
+        label: 'Perlin & Simplex',
+        url: '/perlin-and-simplex',
       },
     ],
   },

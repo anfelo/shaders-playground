@@ -22,6 +22,8 @@ import MosaicView from '@/views/MosaicView.vue'
 import SimpleShapesView from '@/views/SimpleShapesView.vue'
 import BooleanOperationsView from '@/views/BooleanOperationsView.vue'
 import CloudyDayView from '@/views/CloudyDayView.vue'
+import BilinearFiltering from '@/views/BilinearFiltering.vue'
+import PerlinAndSimplexView from '@/views/PerlinAndSimplexView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -117,14 +119,24 @@ const router = createRouter({
       component: DancingTilesView,
     },
     {
-      path: '/noice',
-      name: 'noice',
+      path: '/noise',
+      name: 'noise',
       component: NoiseView,
     },
     {
       path: '/mosaic',
       name: 'mosaic',
       component: MosaicView,
+    },
+    {
+      path: '/bilinear-filtering',
+      name: 'bilinear-filtering',
+      component: BilinearFiltering,
+    },
+    {
+      path: '/perlin-and-simplex',
+      name: 'perlin-and-simplex',
+      component: PerlinAndSimplexView,
     },
     {
       path: '/simple-shapes',
