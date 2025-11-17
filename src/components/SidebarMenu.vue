@@ -136,6 +136,10 @@ const items: MenuItem[] = [
         label: 'Perlin & Simplex',
         url: '/perlin-and-simplex',
       },
+      {
+        label: 'Turbulent Water',
+        url: '/turbulent-water',
+      },
     ],
   },
 ]

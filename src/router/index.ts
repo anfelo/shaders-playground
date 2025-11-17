@@ -24,6 +24,7 @@ import BooleanOperationsView from '@/views/BooleanOperationsView.vue'
 import CloudyDayView from '@/views/CloudyDayView.vue'
 import BilinearFiltering from '@/views/BilinearFiltering.vue'
 import PerlinAndSimplexView from '@/views/PerlinAndSimplexView.vue'
+import TurbulentWaterView from '@/views/TurbulentWaterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -137,6 +138,11 @@ const router = createRouter({
       path: '/perlin-and-simplex',
       name: 'perlin-and-simplex',
       component: PerlinAndSimplexView,
+    },
+    {
+      path: '/turbulent-water',
+      name: 'turbulent-water',
+      component: TurbulentWaterView,
     },
     {
       path: '/simple-shapes',
