@@ -146,6 +146,15 @@ const items: MenuItem[] = [
       },
     ],
   },
+  {
+    label: 'Post FX',
+    items: [
+      {
+        label: 'Color Manipulation',
+        url: '/color-manipulation',
+      },
+    ],
+  },
 ]
 </script>
 
