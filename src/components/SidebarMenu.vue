@@ -153,6 +153,10 @@ const items: MenuItem[] = [
         label: 'Color Manipulation',
         url: '/color-manipulation',
       },
+      {
+        label: 'Distorsion & Ripples',
+        url: '/distorsion-ripples',
+      },
     ],
   },
 ]

@@ -27,6 +27,7 @@ import PerlinAndSimplexView from '@/views/PerlinAndSimplexView.vue'
 import TurbulentWaterView from '@/views/TurbulentWaterView.vue'
 import LandscapeView from '@/views/LandscapeView.vue'
 import ColorManipulationView from '@/views/ColorManipulationView.vue'
+import DistorsionAndRipplesView from '@/views/DistorsionAndRipplesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -170,6 +171,11 @@ const router = createRouter({
       path: '/color-manipulation',
       name: 'color-manipulation',
       component: ColorManipulationView,
+    },
+    {
+      path: '/distorsion-ripples',
+      name: 'distorsion-ripples',
+      component: DistorsionAndRipplesView,
     },
   ],
 })
