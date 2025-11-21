@@ -157,6 +157,10 @@ const items: MenuItem[] = [
         label: 'Distorsion & Ripples',
         url: '/distorsion-ripples',
       },
+      {
+        label: 'Planet & Stars',
+        url: '/planet-stars',
+      },
     ],
   },
 ]

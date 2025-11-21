@@ -28,6 +28,7 @@ import TurbulentWaterView from '@/views/TurbulentWaterView.vue'
 import LandscapeView from '@/views/LandscapeView.vue'
 import ColorManipulationView from '@/views/ColorManipulationView.vue'
 import DistorsionAndRipplesView from '@/views/DistorsionAndRipplesView.vue'
+import PlanetAndStarsView from '@/views/PlanetAndStarsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -176,6 +177,11 @@ const router = createRouter({
       path: '/distorsion-ripples',
       name: 'distorsion-ripples',
       component: DistorsionAndRipplesView,
+    },
+    {
+      path: '/planet-stars',
+      name: 'planet-stars',
+      component: PlanetAndStarsView,
     },
   ],
 })
