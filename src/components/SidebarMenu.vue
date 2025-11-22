@@ -163,6 +163,15 @@ const items: MenuItem[] = [
       },
     ],
   },
+  {
+    label: 'RayMarching',
+    items: [
+      {
+        label: 'Sphere Tracing',
+        url: '/sphere-tracing',
+      },
+    ],
+  },
 ]
 </script>
 

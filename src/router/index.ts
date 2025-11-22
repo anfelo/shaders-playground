@@ -29,6 +29,7 @@ import LandscapeView from '@/views/LandscapeView.vue'
 import ColorManipulationView from '@/views/ColorManipulationView.vue'
 import DistorsionAndRipplesView from '@/views/DistorsionAndRipplesView.vue'
 import PlanetAndStarsView from '@/views/PlanetAndStarsView.vue'
+import SphereTracingView from '@/views/SphereTracingView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -182,6 +183,11 @@ const router = createRouter({
       path: '/planet-stars',
       name: 'planet-stars',
       component: PlanetAndStarsView,
+    },
+    {
+      path: '/sphere-tracing',
+      name: 'sphere-tracing',
+      component: SphereTracingView,
     },
   ],
 })
