@@ -170,6 +170,10 @@ const items: MenuItem[] = [
         label: 'Sphere Tracing',
         url: '/sphere-tracing',
       },
+      {
+        label: 'Terrain',
+        url: '/terrain',
+      },
     ],
   },
 ]
