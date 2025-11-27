@@ -31,6 +31,7 @@ import DistorsionAndRipplesView from '@/views/DistorsionAndRipplesView.vue'
 import PlanetAndStarsView from '@/views/PlanetAndStarsView.vue'
 import SphereTracingView from '@/views/SphereTracingView.vue'
 import TerrainView from '@/views/TerrainView.vue'
+import SingleBladeGrassView from '@/views/SingleBladeGrassView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -194,6 +195,11 @@ const router = createRouter({
       path: '/terrain',
       name: 'terrain',
       component: TerrainView,
+    },
+    {
+      path: '/single-blade',
+      name: 'single-blade',
+      component: SingleBladeGrassView,
     },
   ],
 })
