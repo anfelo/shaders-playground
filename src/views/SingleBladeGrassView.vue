@@ -606,7 +606,7 @@ class SingleBladeGrassScene extends Scene {
 
     // Grass
     const tileDataTexture = new THREE.TextureLoader().load('/textures/tileData.jpg')
-    const grassUniforms = {
+    const grassUniforms: { [uniform: string]: THREE.IUniform<unknown> } = {
       ...this.uniforms,
       u_grass_params: {
         value: new THREE.Vector4(GRASS_SEGMENTS, GRASS_PATCH_SIZE, GRASS_WIDTH, GRASS_HEIGHT),
@@ -620,9 +620,9 @@ class SingleBladeGrassScene extends Scene {
     }
 
     const diffuse = new TextureAtlas()
-    diffuse.Load('diffuse', ['/textures/grass1.png', '/textures/grass2.png'])
+    diffuse.load('diffuse', ['/textures/grass1.png', '/textures/grass2.png'])
     diffuse.onLoad = () => {
-      grassUniforms.u_grass_diffuse.value = diffuse.Info['diffuse'].atlas
+      grassUniforms.u_grass_diffuse.value = diffuse.info['diffuse'].atlas
     }
 
     const grassMaterial = new THREE.ShaderMaterial({

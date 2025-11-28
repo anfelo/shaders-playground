@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 // Taken from https://github.com/mrdoob/three.js/issues/758
-function _GetImageData(image) {
+function getImageData(image: CanvasImageSource & { width: number; height: number }): ImageData {
   const canvas = document.createElement('canvas')
   canvas.width = image.width
   canvas.height = image.height
@@ -14,37 +14,41 @@ function _GetImageData(image) {
   return context!.getImageData(0, 0, image.width, image.height)
 }
 
+type ImageDataLoader = () => ImageData
+
 export class TextureAtlas {
+  private manager = new THREE.LoadingManager()
+  private loader = new THREE.TextureLoader(this.manager)
+  private textures: {
+    [key: string]: { textures: ImageDataLoader[]; atlas?: THREE.DataArrayTexture }
+  } = {}
+
   constructor() {
-    this.create_()
+    this.create()
     this.onLoad = () => {}
   }
 
   onLoad() {}
 
-  Load(atlas: string, names: string[]) {
-    this.loadAtlas_(atlas, names)
+  load(atlas: string, names: string[]) {
+    this.loadAtlas(atlas, names)
   }
 
-  create_() {
-    this.manager_ = new THREE.LoadingManager()
-    this.loader_ = new THREE.TextureLoader(this.manager_)
-    this.textures_ = {}
-
-    this.manager_.onLoad = () => {
+  create() {
+    this.manager.onLoad = () => {
       this.onLoad_()
     }
   }
 
-  get Info() {
-    return this.textures_
+  get info() {
+    return this.textures
   }
 
   onLoad_() {
-    for (let k in this.textures_) {
-      let X = null
-      let Y = null
-      const atlas = this.textures_[k]
+    for (const k in this.textures) {
+      let X = undefined
+      let Y = undefined
+      const atlas = this.textures[k]
       let data = null
 
       for (let t = 0; t < atlas.textures.length; t++) {
@@ -54,7 +58,7 @@ export class TextureAtlas {
         const h = curData.height
         const w = curData.width
 
-        if (X === null) {
+        if (X === undefined) {
           X = w
           Y = h
           data = new Uint8Array(atlas.textures.length * 4 * X * Y)
@@ -65,6 +69,11 @@ export class TextureAtlas {
           return
         }
         const offset = t * (4 * w * h)
+
+        if (!data) {
+          console.error('ArrayBuffer not initialized')
+          return
+        }
 
         data.set(curData.data, offset)
       }
@@ -87,11 +96,11 @@ export class TextureAtlas {
     this.onLoad()
   }
 
-  loadType_(t) {
+  private loadType(t: string) {
     if (typeof t == 'string') {
-      const texture = this.loader_.load(t)
+      const texture = this.loader.load(t)
       return () => {
-        return _GetImageData(texture.image)
+        return getImageData(texture.image)
       }
     } else {
       return () => {
@@ -100,9 +109,9 @@ export class TextureAtlas {
     }
   }
 
-  loadAtlas_(atlas, names) {
-    this.textures_[atlas] = {
-      textures: names.map((n) => this.loadType_(n)),
+  private loadAtlas(atlas: string, names: string[]) {
+    this.textures[atlas] = {
+      textures: names.map((n) => this.loadType(n)),
     }
   }
 }
