@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import PanelMenu from 'primevue/panelmenu'
 import type { MenuItem } from 'primevue/menuitem'
+import Menu from 'primevue/menu'
 
 const items: MenuItem[] = [
   {
@@ -8,19 +8,19 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Color',
-        url: '/color',
+        route: '/color',
       },
       {
         label: 'Color Mix',
-        url: '/color-mix',
+        route: '/color-mix',
       },
       {
         label: 'Multi Color Mix',
-        url: '/multi-color-mix',
+        route: '/multi-color-mix',
       },
       {
         label: 'Color Transition',
-        url: '/color-transition',
+        route: '/color-transition',
       },
     ],
   },
@@ -29,19 +29,19 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Linear Plot',
-        url: '/linear-plot',
+        route: '/linear-plot',
       },
       {
         label: 'Exponential Plot',
-        url: '/exponential-plot',
+        route: '/exponential-plot',
       },
       {
         label: 'Smooth Step Plot',
-        url: '/smooth-step-plot',
+        route: '/smooth-step-plot',
       },
       {
         label: 'Sine Plot',
-        url: '/sine-plot',
+        route: '/sine-plot',
       },
     ],
   },
@@ -50,23 +50,23 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Rectangle Shape',
-        url: '/rectangle-shape',
+        route: '/rectangle-shape',
       },
       {
         label: 'Grid',
-        url: '/grid',
+        route: '/grid',
       },
       {
         label: 'Circle Shape',
-        url: '/circle-shape',
+        route: '/circle-shape',
       },
       {
         label: 'Triangle Shape',
-        url: '/triangle-shape',
+        route: '/triangle-shape',
       },
       {
         label: 'Polar Shapes',
-        url: '/polar-shapes',
+        route: '/polar-shapes',
       },
     ],
   },
@@ -75,15 +75,15 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Translate',
-        url: '/translate',
+        route: '/translate',
       },
       {
         label: 'Rotate',
-        url: '/rotate',
+        route: '/rotate',
       },
       {
         label: 'Scale',
-        url: '/scale',
+        route: '/scale',
       },
     ],
   },
@@ -92,11 +92,11 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Circles',
-        url: '/circles',
+        route: '/circles',
       },
       {
         label: 'Dancing Tiles',
-        url: '/dancing-tiles',
+        route: '/dancing-tiles',
       },
     ],
   },
@@ -105,15 +105,15 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Simple Shapes',
-        url: '/simple-shapes',
+        route: '/simple-shapes',
       },
       {
         label: 'Boolean Operations',
-        url: '/boolean-operations',
+        route: '/boolean-operations',
       },
       {
         label: 'Cloudy Day',
-        url: '/cloudy-day',
+        route: '/cloudy-day',
       },
     ],
   },
@@ -122,27 +122,27 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Noise',
-        url: '/noise',
+        route: '/noise',
       },
       {
         label: 'Mosaic',
-        url: '/mosaic',
+        route: '/mosaic',
       },
       {
         label: 'Bilinear Filtering',
-        url: '/bilinear-filtering',
+        route: '/bilinear-filtering',
       },
       {
         label: 'Perlin & Simplex',
-        url: '/perlin-and-simplex',
+        route: '/perlin-and-simplex',
       },
       {
         label: 'Turbulent Water',
-        url: '/turbulent-water',
+        route: '/turbulent-water',
       },
       {
         label: 'Landscape',
-        url: '/landscape',
+        route: '/landscape',
       },
     ],
   },
@@ -151,15 +151,15 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Color Manipulation',
-        url: '/color-manipulation',
+        route: '/color-manipulation',
       },
       {
         label: 'Distorsion & Ripples',
-        url: '/distorsion-ripples',
+        route: '/distorsion-ripples',
       },
       {
         label: 'Planet & Stars',
-        url: '/planet-stars',
+        route: '/planet-stars',
       },
     ],
   },
@@ -168,11 +168,11 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Sphere Tracing',
-        url: '/sphere-tracing',
+        route: '/sphere-tracing',
       },
       {
         label: 'Terrain',
-        url: '/terrain',
+        route: '/terrain',
       },
     ],
   },
@@ -181,7 +181,7 @@ const items: MenuItem[] = [
     items: [
       {
         label: 'Single Blade Instance',
-        url: '/single-blade',
+        route: '/single-blade',
       },
     ],
   },
@@ -189,7 +189,20 @@ const items: MenuItem[] = [
 </script>
 
 <template>
-  <PanelMenu :model="items" />
+  <Menu :model="items">
+    <template #item="{ item, props }">
+      <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
+        <a v-ripple :href="href" v-bind="props.action" @click="navigate">
+          <span :class="item.icon" />
+          <span class="ml-2">{{ item.label }}</span>
+        </a>
+      </router-link>
+      <a v-else v-ripple :href="item.url" :target="item.target" v-bind="props.action">
+        <span :class="item.icon" />
+        <span class="ml-2">{{ item.label }}</span>
+      </a>
+    </template>
+  </Menu>
 </template>
 
 <style scoped></style>

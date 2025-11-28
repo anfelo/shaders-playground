@@ -18,10 +18,10 @@ import SidebarMenu from '@/components/SidebarMenu.vue'
   display: flex;
 }
 .sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
+  padding: 4px;
+  background-color: #18181B;
   width: 250px;
-  padding: 10px;
+  height: 100vh;
+  overflow-y: auto;
 }
 </style>

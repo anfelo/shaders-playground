@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import { type Scene } from '@/types/scene'
-import { GUI } from 'lil-gui'
+import { Scene } from '@/shared/scene/scene'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
@@ -55,49 +54,34 @@ void main(){
 }
 `
 
-class TriangleShapeScene implements Scene {
+class TriangleShapeScene extends Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
-  uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
 
   playgroundEl = elementRef.value
-  renderer = new THREE.WebGLRenderer()
 
   totalTime: number = 0.0
   clock = new THREE.Clock()
 
-  gui = new GUI()
   uiState = {
     u_color: [0.0, 0.0, 0.0],
     u_radius: 0.40,
     u_sides: 3,
   }
 
-  constructor() {}
-
-  destroy() {
-    this.renderer.setAnimationLoop(null)
-    // Dispose renderer
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.domElement.remove()
-
-    this.gui.destroy()
-
-    // Remove event listeners
-    window.removeEventListener('resize', this.onWindowResize)
+  constructor() {
+    super(window.innerWidth - 250, window.innerHeight)
   }
 
   async init(): Promise<void> {
+    super.init()
+
     if (!this.playgroundEl) {
       console.error('Playground element not initialized')
       return
     }
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.playgroundEl.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', () => this.onWindowResize(), false)
 
     this.initDebugUI()
 
@@ -105,13 +89,12 @@ class TriangleShapeScene implements Scene {
 
     await this.setupProject()
 
-    this.onWindowResize()
     this.renderer.setAnimationLoop((time, frame) => this.animate(time, frame))
   }
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth, window.innerHeight] },
+      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
       u_color: { value: this.uiState.u_color },
       u_radius: { value: this.uiState.u_radius },
       u_sides: { value: this.uiState.u_sides },
@@ -130,16 +113,11 @@ class TriangleShapeScene implements Scene {
   }
 
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_color.value = this.uiState.u_color
     this.uniforms.u_radius.value = this.uiState.u_radius
     this.uniforms.u_sides.value = this.uiState.u_sides
 
     this.renderer.render(this.scene, this.camera)
-  }
-
-  private onWindowResize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
   private initDebugUI() {

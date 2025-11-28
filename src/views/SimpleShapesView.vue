@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import { type Scene } from '@/types/scene'
-import { GUI } from 'lil-gui'
+import { Scene } from '@/shared/scene/scene'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
@@ -150,52 +149,37 @@ void main(){
 }
 `
 
-class SimpleShapesScene implements Scene {
+class SimpleShapesScene extends Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
-  uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
 
   playgroundEl = elementRef.value
-  renderer = new THREE.WebGLRenderer()
 
   totalTime: number = 0.0
   clock = new THREE.Clock()
 
-  gui = new GUI()
   uiState = {
     u_color: [1.0, 0.0, 0.0],
     u_shape: 1,
     u_pos_x: 0.0,
     u_pos_y: 0.0,
     u_rot: 0.0,
-    u_scale: 1.0
+    u_scale: 1.0,
   }
 
-  constructor() {}
-
-  destroy() {
-    this.renderer.setAnimationLoop(null)
-    // Dispose renderer
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.domElement.remove()
-
-    this.gui.destroy()
-
-    // Remove event listeners
-    window.removeEventListener('resize', this.onWindowResize)
+  constructor() {
+    super(window.innerWidth - 250, window.innerHeight)
   }
 
   async init(): Promise<void> {
+    super.init()
+
     if (!this.playgroundEl) {
       console.error('Playground element not initialized')
       return
     }
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.playgroundEl.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', () => this.onWindowResize(), false)
 
     this.initDebugUI()
 
@@ -203,13 +187,12 @@ class SimpleShapesScene implements Scene {
 
     await this.setupProject()
 
-    this.onWindowResize()
     this.renderer.setAnimationLoop((time, frame) => this.animate(time, frame))
   }
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth, window.innerHeight] },
+      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
       u_color: { value: this.uiState.u_color },
       u_shape: { value: this.uiState.u_shape },
       u_pos: { value: [this.uiState.u_pos_x, this.uiState.u_pos_y] },
@@ -230,7 +213,6 @@ class SimpleShapesScene implements Scene {
   }
 
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_color.value = this.uiState.u_color
     this.uniforms.u_shape.value = this.uiState.u_shape
     this.uniforms.u_pos.value = [this.uiState.u_pos_x, this.uiState.u_pos_y]
@@ -240,24 +222,19 @@ class SimpleShapesScene implements Scene {
     this.renderer.render(this.scene, this.camera)
   }
 
-  private onWindowResize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
-  }
-
   private initDebugUI() {
     this.gui.addColor(this.uiState, 'u_color')
     this.gui.add(this.uiState, 'u_shape', { Line: 0, Circle: 1, Box: 2, Hexagon: 3 })
 
-    const posFolder = this.gui.addFolder( 'Position' );
-    posFolder.add(this.uiState, 'u_pos_x', -300.0, 300, 0.01);
-    posFolder.add(this.uiState, 'u_pos_y', -300.0, 300, 0.01);
+    const posFolder = this.gui.addFolder('Position')
+    posFolder.add(this.uiState, 'u_pos_x', -300.0, 300, 0.01)
+    posFolder.add(this.uiState, 'u_pos_y', -300.0, 300, 0.01)
 
-    const rotFolder = this.gui.addFolder( 'Rotation' );
-    rotFolder.add(this.uiState, 'u_rot', 0, 360, 0.01);
+    const rotFolder = this.gui.addFolder('Rotation')
+    rotFolder.add(this.uiState, 'u_rot', 0, 360, 0.01)
 
-    const scaleFolder = this.gui.addFolder( 'Scale' );
-    scaleFolder.add(this.uiState, 'u_scale', 1, 10, 0.01);
+    const scaleFolder = this.gui.addFolder('Scale')
+    scaleFolder.add(this.uiState, 'u_scale', 1, 10, 0.01)
   }
 }
 

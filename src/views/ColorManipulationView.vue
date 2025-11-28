@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import { type Scene } from '@/types/scene'
-import { GUI } from 'lil-gui'
+import { Scene } from '@/shared/scene/scene'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
@@ -116,18 +115,15 @@ void main() {
 }
 `
 
-class ColorManipulationScene implements Scene {
+class ColorManipulationScene extends Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
-  uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
 
   playgroundEl = elementRef.value
-  renderer = new THREE.WebGLRenderer()
 
   totalTime: number = 0.0
   clock = new THREE.Clock()
 
-  gui = new GUI()
   uiState = {
     tint_color: [1.0, 1.0, 1.0],
     brightness_amount: 0.1,
@@ -139,34 +135,22 @@ class ColorManipulationScene implements Scene {
     boost_color: [0.72, 0.25, 0.25],
     vignette_enabled: false,
     pixelated_enabled: false,
-    pixelated_res: 64.0
+    pixelated_res: 64.0,
   }
 
-  constructor() {}
-
-  destroy() {
-    this.renderer.setAnimationLoop(null)
-    // Dispose renderer
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.domElement.remove()
-
-    this.gui.destroy()
-
-    // Remove event listeners
-    window.removeEventListener('resize', this.onWindowResize)
+  constructor() {
+    super(window.innerWidth - 250, window.innerHeight)
   }
 
   async init(): Promise<void> {
+    super.init()
+
     if (!this.playgroundEl) {
       console.error('Playground element not initialized')
       return
     }
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.playgroundEl.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', () => this.onWindowResize(), false)
 
     this.initDebugUI()
 
@@ -174,7 +158,6 @@ class ColorManipulationScene implements Scene {
 
     await this.setupProject()
 
-    this.onWindowResize()
     this.renderer.setAnimationLoop((time, frame) => this.animate(time, frame))
   }
 
@@ -192,7 +175,7 @@ class ColorManipulationScene implements Scene {
     dogTexture.minFilter = THREE.NearestFilter
 
     this.uniforms = {
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_resolution: { value: new THREE.Vector2(window.innerWidth - 250, window.innerHeight) },
       u_time: { value: 0.0 },
       diffuse1: { value: dogTexture },
       diffuse2: { value: plantsTexture },
@@ -207,7 +190,7 @@ class ColorManipulationScene implements Scene {
       u_boost_enabled: { value: this.uiState.boost_enabled },
       u_vignette_enabled: { value: this.uiState.vignette_enabled },
       u_pixelated_enabled: { value: this.uiState.pixelated_enabled },
-      u_pixelated_res: { value: this.uiState.pixelated_res }
+      u_pixelated_res: { value: this.uiState.pixelated_res },
     }
 
     const material = new THREE.ShaderMaterial({
@@ -226,7 +209,6 @@ class ColorManipulationScene implements Scene {
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
     const elapsedTime = this.clock.getElapsedTime()
 
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_time.value = elapsedTime
     this.uniforms.u_tint_color.value = this.uiState.tint_color
     this.uniforms.u_brightness_amount.value = this.uiState.brightness_amount
@@ -241,10 +223,6 @@ class ColorManipulationScene implements Scene {
     this.uniforms.u_pixelated_res.value = this.uiState.pixelated_res
 
     this.renderer.render(this.scene, this.camera)
-  }
-
-  private onWindowResize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
   private initDebugUI() {

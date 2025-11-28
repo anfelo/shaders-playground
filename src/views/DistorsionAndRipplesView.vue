@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import { type Scene } from '@/types/scene'
-import { GUI } from 'lil-gui'
+import { Scene } from '@/shared/scene/scene'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
@@ -67,49 +66,34 @@ void main() {
 }
 `
 
-class DistorsionAndRipplesScene implements Scene {
+class DistorsionAndRipplesScene extends Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
-  uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
 
   playgroundEl = elementRef.value
-  renderer = new THREE.WebGLRenderer()
 
   totalTime: number = 0.0
   clock = new THREE.Clock()
 
-  gui = new GUI()
   uiState = {
     distorsion_center: 0.5,
     distorsion_amount: 0.05,
-    distorsion_speed: 2.0
+    distorsion_speed: 2.0,
   }
 
-  constructor() {}
-
-  destroy() {
-    this.renderer.setAnimationLoop(null)
-    // Dispose renderer
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.domElement.remove()
-
-    this.gui.destroy()
-
-    // Remove event listeners
-    window.removeEventListener('resize', this.onWindowResize)
+  constructor() {
+    super(window.innerWidth - 250, window.innerHeight)
   }
 
   async init(): Promise<void> {
+    super.init()
+
     if (!this.playgroundEl) {
       console.error('Playground element not initialized')
       return
     }
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.playgroundEl.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', () => this.onWindowResize(), false)
 
     this.initDebugUI()
 
@@ -117,7 +101,6 @@ class DistorsionAndRipplesScene implements Scene {
 
     await this.setupProject()
 
-    this.onWindowResize()
     this.renderer.setAnimationLoop((time, frame) => this.animate(time, frame))
   }
 
@@ -135,14 +118,14 @@ class DistorsionAndRipplesScene implements Scene {
     dogTexture.minFilter = THREE.NearestFilter
 
     this.uniforms = {
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_resolution: { value: new THREE.Vector2(window.innerWidth - 250, window.innerHeight) },
       u_time: { value: 0.0 },
       diffuse1: { value: dogTexture },
       diffuse2: { value: plantsTexture },
       vignette: { value: vignetteTexture },
       u_distorsion_center: { value: this.uiState.distorsion_center },
       u_distorsion_amount: { value: this.uiState.distorsion_amount },
-      u_distorsion_speed: { value: this.uiState.distorsion_speed }
+      u_distorsion_speed: { value: this.uiState.distorsion_speed },
     }
 
     const material = new THREE.ShaderMaterial({
@@ -161,17 +144,12 @@ class DistorsionAndRipplesScene implements Scene {
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
     const elapsedTime = this.clock.getElapsedTime()
 
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_time.value = elapsedTime
     this.uniforms.u_distorsion_center.value = this.uiState.distorsion_center
     this.uniforms.u_distorsion_amount.value = this.uiState.distorsion_amount
     this.uniforms.u_distorsion_speed.value = this.uiState.distorsion_speed
 
     this.renderer.render(this.scene, this.camera)
-  }
-
-  private onWindowResize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
   private initDebugUI() {

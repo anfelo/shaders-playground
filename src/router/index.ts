@@ -37,6 +37,10 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/',
+      redirect: '/color',
+    },
+    {
       path: '/color',
       name: 'color',
       component: BasicColorView,

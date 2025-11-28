@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import { type Scene } from '@/types/scene'
-import { GUI } from 'lil-gui'
+import { Scene } from '@/shared/scene/scene'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
@@ -46,18 +45,15 @@ void main() {
 }
 `
 
-class SmoothStepPlotScene implements Scene {
+class SmoothStepPlotScene extends Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
-  uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
 
   playgroundEl = elementRef.value
-  renderer = new THREE.WebGLRenderer()
 
   totalTime: number = 0.0
   clock = new THREE.Clock()
 
-  gui = new GUI()
   uiState = {
     u_stroke: 0.02,
     u_color: [0.0, 1.0, 0.0],
@@ -66,31 +62,19 @@ class SmoothStepPlotScene implements Scene {
     u_smooth_max: 0.9,
   }
 
-  constructor() {}
-
-  destroy() {
-    this.renderer.setAnimationLoop(null)
-    // Dispose renderer
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.domElement.remove()
-
-    this.gui.destroy()
-
-    // Remove event listeners
-    window.removeEventListener('resize', this.onWindowResize)
+  constructor() {
+    super(window.innerWidth - 250, window.innerHeight)
   }
 
   async init(): Promise<void> {
+    super.init()
+
     if (!this.playgroundEl) {
       console.error('Playground element not initialized')
       return
     }
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.playgroundEl.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', () => this.onWindowResize(), false)
 
     this.initDebugUI()
 
@@ -98,13 +82,12 @@ class SmoothStepPlotScene implements Scene {
 
     await this.setupProject()
 
-    this.onWindowResize()
     this.renderer.setAnimationLoop((time, frame) => this.animate(time, frame))
   }
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth, window.innerHeight] },
+      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
       u_stroke: { value: this.uiState.u_stroke },
       u_color: { value: this.uiState.u_color },
       u_smooth: { value: this.uiState.u_smooth },
@@ -124,17 +107,12 @@ class SmoothStepPlotScene implements Scene {
   }
 
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
     this.uniforms.u_stroke.value = this.uiState.u_stroke
     this.uniforms.u_color.value = this.uiState.u_color
     this.uniforms.u_smooth.value = this.uiState.u_smooth
     this.uniforms.u_smooth_range.value = [this.uiState.u_smooth_min, this.uiState.u_smooth_max]
 
     this.renderer.render(this.scene, this.camera)
-  }
-
-  private onWindowResize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
   private initDebugUI() {

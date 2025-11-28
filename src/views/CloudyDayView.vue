@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import { type Scene } from '@/types/scene'
-import { GUI } from 'lil-gui'
+import { Scene } from '@/shared/scene/scene'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
@@ -24,9 +23,7 @@ const fragmentShader = `
 varying vec2 v_uvs;
 
 uniform vec2 u_resolution;
-uniform vec3 u_color;
 uniform float u_time;
-uniform int u_operation;
 
 #define PI 3.14159265359
 #define TWO_PI 6.28318530718
@@ -337,51 +334,32 @@ void main(){
 }
 `
 
-class CloudyDayScene implements Scene {
+class CloudyDayScene extends Scene {
   scene = new THREE.Scene()
   camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.1, 1000)
-  uniforms: { [uniform: string]: THREE.IUniform<any> } = {}
 
   playgroundEl = elementRef.value
-  renderer = new THREE.WebGLRenderer()
 
   totalTime: number = 0.0
   clock = new THREE.Clock()
 
-  gui = new GUI()
   uiState = {
     u_time: { value: 0.0 },
-    u_color: [1.0, 0.25, 0.25],
-    u_operation: 0,
-    u_rot: 0.0,
-    u_scale: 1.0,
   }
 
-  constructor() {}
-
-  destroy() {
-    this.renderer.setAnimationLoop(null)
-    // Dispose renderer
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.domElement.remove()
-
-    this.gui.destroy()
-
-    // Remove event listeners
-    window.removeEventListener('resize', this.onWindowResize)
+  constructor() {
+    super(window.innerWidth - 250, window.innerHeight)
   }
 
   async init(): Promise<void> {
+    super.init()
+
     if (!this.playgroundEl) {
       console.error('Playground element not initialized')
       return
     }
 
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.playgroundEl.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', () => this.onWindowResize(), false)
 
     this.initDebugUI()
 
@@ -389,17 +367,13 @@ class CloudyDayScene implements Scene {
 
     await this.setupProject()
 
-    this.onWindowResize()
     this.renderer.setAnimationLoop((time, frame) => this.animate(time, frame))
   }
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth, window.innerHeight] },
-      u_color: { value: this.uiState.u_color },
-      u_scale: { value: this.uiState.u_scale },
+      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
       u_time: { value: this.uiState.u_time },
-      u_operation: { value: this.uiState.u_operation },
     }
     const material = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
@@ -416,29 +390,13 @@ class CloudyDayScene implements Scene {
 
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
     const elapsedTime = this.clock.getElapsedTime()
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
-    this.uniforms.u_color.value = this.uiState.u_color
-    this.uniforms.u_operation.value = this.uiState.u_operation
+
     this.uniforms.u_time.value = elapsedTime
 
     this.renderer.render(this.scene, this.camera)
   }
 
-  private onWindowResize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    this.uniforms.u_resolution.value = [window.innerWidth, window.innerHeight]
-  }
-
-  private initDebugUI() {
-    this.gui.addColor(this.uiState, 'u_color')
-    this.gui.add(this.uiState, 'u_operation', {
-      Union: 0,
-      Intersection: 1,
-      Substraction: 2,
-      SoftMin: 3,
-      softMax: 4,
-    })
-  }
+  private initDebugUI() {}
 }
 
 onMounted(() => {
