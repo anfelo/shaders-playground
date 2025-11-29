@@ -69,10 +69,6 @@ class TriangleShapeScene extends Scene {
     u_sides: 3,
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -94,7 +90,7 @@ class TriangleShapeScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_color: { value: this.uiState.u_color },
       u_radius: { value: this.uiState.u_radius },
       u_sides: { value: this.uiState.u_sides },

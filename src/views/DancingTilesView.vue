@@ -78,10 +78,6 @@ class DancingTilesScene extends Scene {
     u_time: { value: 0.0 },
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -103,7 +99,7 @@ class DancingTilesScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_color: { value: this.uiState.u_color },
       u_rows: { value: this.uiState.u_rows },
       u_time: { value: this.uiState.u_time },

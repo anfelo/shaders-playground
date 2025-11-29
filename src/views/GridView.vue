@@ -60,10 +60,6 @@ class GridScene extends Scene {
     u_cell_size: 100.0,
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -85,7 +81,7 @@ class GridScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_color: { value: this.uiState.u_color },
       u_cell_size: { value: this.uiState.u_cell_size },
     }

@@ -265,10 +265,6 @@ class TurbulentWaterScene extends Scene {
     stepped: false,
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -290,7 +286,7 @@ class TurbulentWaterScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_noise_type: { value: this.uiState.noise_type },
       u_stepped: { value: this.uiState.stepped },
       u_time: { value: this.uiState.time },

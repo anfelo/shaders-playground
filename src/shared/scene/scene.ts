@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GUI } from 'lil-gui'
+import { useAppStore } from '@/store/store'
 
 export class Scene {
   mouse = new THREE.Vector2(0.0, 0.0)
@@ -9,13 +10,11 @@ export class Scene {
 
   uniforms: { [uniform: string]: THREE.IUniform<unknown> } = {}
 
-  width: number
-  height: number
+  width: number = window.innerWidth
+  height: number = window.innerHeight
 
-  constructor(width: number, height: number) {
-    this.width = width
-    this.height = height
-  }
+  appStore = useAppStore()
+  unsubscribe: () => void = () => {}
 
   destroy() {
     this.renderer.setAnimationLoop(null)
@@ -29,21 +28,43 @@ export class Scene {
     // Remove event listeners
     window.removeEventListener('resize', this.onWindowResize)
     document.removeEventListener('mousemove', this.onMouseDown, false)
+
+    this.unsubscribe()
   }
 
   async init(): Promise<void> {
+    this.setSceneSize()
+
     this.renderer.setSize(this.width, this.height)
 
-    window.addEventListener('resize', () => this.onWindowResize(), false)
+    window.addEventListener(
+      'resize',
+      () => {
+        this.setSceneSize()
+        this.onWindowResize()
+      },
+      false,
+    )
     document.addEventListener('mousemove', (event) => this.onMouseDown(event), false)
+
+    this.unsubscribe = this.appStore.$subscribe(() => {
+      this.setSceneSize()
+      this.onWindowResize()
+    })
 
     this.onWindowResize()
   }
 
-  private onWindowResize() {
-    this.width = window.innerWidth - 250
-    this.height = window.innerHeight
+  private setSceneSize() {
+    const isMenuOpen = this.appStore.isMenuOpen
 
+    const xOffset = isMenuOpen ? 250 : 0
+
+    this.width = window.innerWidth - xOffset
+    this.height = window.innerHeight
+  }
+
+  private onWindowResize() {
     this.renderer.setSize(this.width, this.height)
 
     if (this.uniforms.u_resolution) {

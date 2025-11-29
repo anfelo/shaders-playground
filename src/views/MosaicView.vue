@@ -56,10 +56,6 @@ class MosaicScene extends Scene {
     u_size: 10.0,
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -81,7 +77,7 @@ class MosaicScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_time: { value: this.uiState.u_time },
       u_size: { value: this.uiState.u_size },
     }

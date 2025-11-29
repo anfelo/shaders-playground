@@ -56,10 +56,6 @@ class ColorTransitionScene extends Scene {
     color2: [0.0, 1.0, 0.0],
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 

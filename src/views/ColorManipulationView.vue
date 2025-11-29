@@ -138,10 +138,6 @@ class ColorManipulationScene extends Scene {
     pixelated_res: 64.0,
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -175,7 +171,7 @@ class ColorManipulationScene extends Scene {
     dogTexture.minFilter = THREE.NearestFilter
 
     this.uniforms = {
-      u_resolution: { value: new THREE.Vector2(window.innerWidth - 250, window.innerHeight) },
+      u_resolution: { value: new THREE.Vector2(this.width, this.height) },
       u_time: { value: 0.0 },
       diffuse1: { value: dogTexture },
       diffuse2: { value: plantsTexture },

@@ -50,10 +50,6 @@ class MultiColorMixScene extends Scene {
     color4: [0.0, 1.0, 1.0],
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 

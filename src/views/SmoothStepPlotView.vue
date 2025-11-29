@@ -62,10 +62,6 @@ class SmoothStepPlotScene extends Scene {
     u_smooth_max: 0.9,
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -87,7 +83,7 @@ class SmoothStepPlotScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_stroke: { value: this.uiState.u_stroke },
       u_color: { value: this.uiState.u_color },
       u_smooth: { value: this.uiState.u_smooth },

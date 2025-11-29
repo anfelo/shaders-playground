@@ -55,10 +55,6 @@ class LinearPlotScene extends Scene {
     u_color: [0.0, 1.0, 0.0],
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -80,7 +76,7 @@ class LinearPlotScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_stroke: { value: this.uiState.u_stroke },
       u_color: { value: this.uiState.u_color },
     }

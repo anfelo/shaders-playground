@@ -65,10 +65,6 @@ class PolarShapesScene extends Scene {
     options: { Option1: 0, Option2: 1, Option3: 2, Option4: 3, Option5: 4 },
   }
 
-  constructor() {
-    super(window.innerWidth - 250, window.innerHeight)
-  }
-
   async init(): Promise<void> {
     super.init()
 
@@ -90,7 +86,7 @@ class PolarShapesScene extends Scene {
 
   async setupProject(): Promise<void> {
     this.uniforms = {
-      u_resolution: { value: [window.innerWidth - 250, window.innerHeight] },
+      u_resolution: { value: [this.width, this.height] },
       u_color: { value: this.uiState.u_color },
       u_smoothness: { value: this.uiState.u_smoothness },
       u_shape: { value: this.uiState.u_shape },
