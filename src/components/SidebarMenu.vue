@@ -185,6 +185,15 @@ const items: MenuItem[] = [
       },
     ],
   },
+  {
+    label: 'Particles',
+    items: [
+      {
+        label: 'Basic Particles',
+        route: '/basic-particles',
+      },
+    ],
+  },
 ]
 </script>
 

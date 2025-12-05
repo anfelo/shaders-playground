@@ -1,10 +1,12 @@
 import * as THREE from 'three'
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 import { GUI } from 'lil-gui'
 import { useAppStore } from '@/store/store'
 
 export class Scene {
   mouse = new THREE.Vector2(0.0, 0.0)
 
+  scene = new THREE.Scene()
   renderer = new THREE.WebGLRenderer()
   gui = new GUI()
 
@@ -55,6 +57,16 @@ export class Scene {
     this.onWindowResize()
   }
 
+  loadRGBE(path: string) {
+    const rgbeLoader = new RGBELoader()
+    rgbeLoader.load(path, (hdrTexture) => {
+      hdrTexture.mapping = THREE.EquirectangularReflectionMapping
+
+      this.scene.background = hdrTexture
+      this.scene.environment = hdrTexture
+    })
+  }
+
   private setSceneSize() {
     const isMenuOpen = this.appStore.isMenuOpen
 
@@ -70,7 +82,11 @@ export class Scene {
     if (this.uniforms.u_resolution) {
       this.uniforms.u_resolution.value = [this.width, this.height]
     }
+
+    this.onResize()
   }
+
+  onResize() {}
 
   private onMouseDown(event: MouseEvent) {
     this.mouse.x = event.clientX

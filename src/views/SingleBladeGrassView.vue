@@ -533,7 +533,7 @@ class SingleBladeGrassScene extends Scene {
     this.initDebugUI()
 
     const fov = 60
-    const aspect = 1920 / 1080
+    const aspect = window.innerWidth / window.innerHeight
     const near = 0.1
     const far = 10000.0
     this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
