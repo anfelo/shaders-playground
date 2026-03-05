@@ -33,6 +33,8 @@ import SphereTracingView from '@/views/SphereTracingView.vue'
 import TerrainView from '@/views/TerrainView.vue'
 import SingleBladeGrassView from '@/views/SingleBladeGrassView.vue'
 import BasicParticlesView from '@/views/BasicParticlesView.vue'
+import ParticlesBlendingModesView from '@/views/ParticlesBlendingModesView.vue'
+import GPUParticlesStatelessView from '@/views/GPUParticlesStatelessView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -210,6 +212,16 @@ const router = createRouter({
       path: '/basic-particles',
       name: 'basic-particles',
       component: BasicParticlesView,
+    },
+    {
+      path: '/blending-modes',
+      name: 'blending-modes',
+      component: ParticlesBlendingModesView,
+    },
+    {
+      path: '/gpu-particles-stateless',
+      name: 'gpu-particles-stateless',
+      component: GPUParticlesStatelessView,
     },
   ],
 })

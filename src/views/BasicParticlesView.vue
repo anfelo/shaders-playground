@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import * as THREE from 'three'
-import Stats from 'stats.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Scene } from '@/shared/scene/scene'
 import * as MATH from '@/shared/math/math'
@@ -13,18 +12,13 @@ import {
   PointShape,
   ParticleRendererParams,
 } from '@/shared/particles/particle-system'
+import { useStats } from '@/composables/stats'
 
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
 let scene: BasicParticlesScene
 
-const stats = new Stats()
-stats.showPanel(0)
-stats.dom.style.position = 'absolute'
-stats.dom.style.left = 'unset'
-stats.dom.style.right = '300px'
-stats.dom.style.top = '0px'
-document.body.appendChild(stats.dom)
+const stats = useStats()
 
 const vertexShader = `
 attribute vec2 particle_data;

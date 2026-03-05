@@ -134,6 +134,12 @@ export class ParticleRenderer {
   }
 }
 
+export class ParticleAttractor {
+  position = new THREE.Vector3()
+  intensity = 1
+  radius = 1
+}
+
 export class EmitterParams {
   maxLife = 5
   velocityMagnitude = 0
@@ -150,6 +156,7 @@ export class EmitterParams {
   dragCoefficient = DRAG
   renderer: ParticleRenderer | null = null
   shape = new PointShape()
+  attractors: ParticleAttractor[] = []
 
   onCreate: ((particle: Particle) => void) | null = null
   onStep: ((particle: Particle) => void) | null = null
@@ -276,6 +283,16 @@ export class Emitter {
     const forces = this.params.gravity ? GRAVITY.clone() : new THREE.Vector3()
     forces.multiplyScalar(this.params.gravityStrength)
     forces.add(particle.velocity.clone().multiplyScalar(-this.params.dragCoefficient))
+
+    for (let i = 0; i < this.params.attractors.length; ++i) {
+      const attractor = this.params.attractors[i]
+      const direction = attractor.position.clone().sub(particle.position)
+      const distance = direction.length()
+      direction.normalize()
+
+      const attractorForce = attractor.intensity / (1 + (distance / attractor.radius) ** 2)
+      forces.add(direction.multiplyScalar(attractorForce))
+    }
 
     particle.velocity.add(forces.multiplyScalar(timeElapsed))
 

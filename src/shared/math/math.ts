@@ -3,6 +3,26 @@ import MersenneTwister from 'mersennetwister'
 
 const MT = new MersenneTwister(1)
 
+function saturate(v: number) {
+  return Math.min(1, Math.max(0, v))
+}
+
+function inverseLerp(a: number, b: number, v: number) {
+  return saturate((v - a) / (b - a))
+}
+
+function remap(a: number, b: number, c: number, d: number, v: number) {
+  return c + (d - c) * inverseLerp(a, b, v)
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t
+}
+
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v))
+}
+
 function random() {
   return MT.random()
 }
@@ -193,4 +213,14 @@ class ColorInterpolant extends Interpolant<THREE.Color> {
   }
 }
 
-export { random, Vec3Interpolant, FloatInterpolant, ColorInterpolant }
+export {
+  saturate,
+  inverseLerp,
+  remap,
+  lerp,
+  clamp,
+  random,
+  Vec3Interpolant,
+  FloatInterpolant,
+  ColorInterpolant,
+}

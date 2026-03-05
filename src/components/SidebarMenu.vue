@@ -189,8 +189,16 @@ const items: MenuItem[] = [
     label: 'Particles',
     items: [
       {
-        label: 'Basic Particles',
+        label: 'Particle System',
         route: '/basic-particles',
+      },
+      {
+        label: 'Blending Modes',
+        route: '/blending-modes',
+      },
+      {
+        label: 'GPU Particles - Stateless',
+        route: '/gpu-particles-stateless',
       },
     ],
   },
