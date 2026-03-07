@@ -1,19 +1,28 @@
 import * as THREE from 'three'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { FontLoader } from 'three/addons/loaders/FontLoader.js'
 import { GUI } from 'lil-gui'
 import { useAppStore } from '@/store/store'
+import { TextureLoader } from 'three'
 
 export class Scene {
   mouse = new THREE.Vector2(0.0, 0.0)
 
   scene = new THREE.Scene()
-  renderer = new THREE.WebGLRenderer()
+  renderer = new THREE.WebGLRenderer({ antialias: true })
   gui = new GUI()
 
   uniforms: { [uniform: string]: THREE.IUniform<unknown> } = {}
 
   width: number = window.innerWidth
   height: number = window.innerHeight
+
+  private fontLoader: FontLoader | null = null
+  private rgbeLoader: RGBELoader | null = null
+  private gltfLoader: GLTFLoader | null = null
+  private textureLoader: TextureLoader | null = null
 
   appStore = useAppStore()
   unsubscribe: () => void = () => {}
@@ -37,6 +46,8 @@ export class Scene {
   async init(): Promise<void> {
     this.setSceneSize()
 
+    this.setLoaders()
+
     this.renderer.setSize(this.width, this.height)
 
     window.addEventListener(
@@ -57,14 +68,38 @@ export class Scene {
     this.onWindowResize()
   }
 
+  private setLoaders(): void {
+    this.rgbeLoader = new RGBELoader()
+
+    this.gltfLoader = new GLTFLoader()
+    const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('/libs/draco')
+    this.gltfLoader.setDRACOLoader(dracoLoader)
+
+    this.fontLoader = new FontLoader()
+
+    this.textureLoader = new TextureLoader()
+  }
+
   loadRGBE(path: string) {
-    const rgbeLoader = new RGBELoader()
-    rgbeLoader.load(path, (hdrTexture) => {
+    this.rgbeLoader!.load(path, (hdrTexture) => {
       hdrTexture.mapping = THREE.EquirectangularReflectionMapping
 
       this.scene.background = hdrTexture
       this.scene.environment = hdrTexture
     })
+  }
+
+  async loadGLTF(path: string) {
+    return await this.gltfLoader!.loadAsync(path)
+  }
+
+  async loadFont(path: string) {
+    return await this.fontLoader!.loadAsync(path)
+  }
+
+  async loadTexture(path: string) {
+    return this.textureLoader!.loadAsync(path)
   }
 
   private setSceneSize() {

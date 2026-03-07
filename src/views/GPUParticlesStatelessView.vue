@@ -5,7 +5,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Scene } from '@/shared/scene/scene'
 import { useStats } from '@/composables/stats'
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js'
-
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js'
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
+import type { Font } from 'three/addons/loaders/FontLoader.js'
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
 let scene: GPUParticlesStatelessScene
@@ -53,6 +55,59 @@ void main(){
 }
 `
 
+const blendTextureVertexShader = `
+precision highp float;
+precision highp sampler2DArray;
+
+in float position;
+
+uniform sampler2DArray u_data_texture;
+uniform float u_data_texture_index;
+uniform float u_time;
+uniform vec2 u_resolution;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+vec2 unpackUV(float position, vec2 resolution) {
+  int index = int(position);
+  ivec2 pixelIndex = ivec2(index % int(resolution.x), index / int(resolution.x));
+
+  return vec2(pixelIndex) / resolution + 0.5 / resolution;
+}
+
+void main() {
+    // position, projectionMatrix, modelViewMatrix are provided by THREE.js
+    vec2 uv = unpackUV(position, u_resolution);
+    int i0 =  int(u_data_texture_index);
+    int i1 = (i0 + 1) % 4;
+    float t = smoothstep(0.25, 0.75, fract(u_data_texture_index));
+
+    vec3 packedCoordinate1 = texture(u_data_texture, vec3(uv, float(i0))).xyz;
+    vec3 packedCoordinate2 = texture(u_data_texture, vec3(uv, float(i1))).xyz;
+
+    vec3 localPosition = mix(packedCoordinate1, packedCoordinate2, t);
+
+    vec3 mvPosition = (modelViewMatrix * vec4(localPosition, 1.0)).xyz;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);
+    gl_PointSize = 10.0 / -mvPosition.z;
+}
+`
+
+const blendTextureFragmentShader = `
+precision highp float;
+
+uniform sampler2D u_diffuse_texture;
+
+out vec4 out_Color;
+
+void main(){
+    vec4 diffuseSample = texture(u_diffuse_texture, gl_PointCoord);
+    out_Color = diffuseSample;
+}
+`
+
 class GPUParticlesStatelessScene extends Scene {
   camera = new THREE.PerspectiveCamera()
 
@@ -60,6 +115,7 @@ class GPUParticlesStatelessScene extends Scene {
 
   totalTime: number = 0.0
   clock = new THREE.Clock(true)
+  blendTiming = 0
 
   uiState = {}
 
@@ -86,19 +142,21 @@ class GPUParticlesStatelessScene extends Scene {
     const near = 0.1
     const far = 1000
     this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
-    this.camera.position.set(20, 1, 20)
+    this.camera.position.set(9, 2, -5)
     this.camera.lookAt(new THREE.Vector3(0, 0, 0))
 
     const controls = new OrbitControls(this.camera, this.renderer.domElement)
     controls.enableDamping = true
-    controls.target.set(0, 8, 0)
+    controls.target.set(0, 0, 0)
+    controls.minDistance = 1
+    controls.maxDistance = 10
     controls.update()
 
     this.scene.background = new THREE.Color(0x000000)
     // Scene tweaks
     this.scene.backgroundBlurriness = 0.0
-    this.scene.backgroundIntensity = 0.025
-    this.scene.environmentIntensity = 0.025
+    this.scene.backgroundIntensity = 0.05
+    this.scene.environmentIntensity = 0.05
 
     await this.setupProject()
 
@@ -110,7 +168,136 @@ class GPUParticlesStatelessScene extends Scene {
 
     this.uniforms = {}
 
-    this.setupGPUParticlesBlendData()
+    this.setupGPUParticlesBlendTexture()
+  }
+
+  private createTextMesh(font: Font, text: string) {
+    const textGeo = new TextGeometry(text, {
+      font: font,
+      size: 1,
+      depth: 0.5,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 0.1,
+      bevelSize: 0.05,
+    })
+    textGeo.computeBoundingBox()
+    const centerOffset = -0.5 * (textGeo.boundingBox!.max.x - textGeo.boundingBox!.min.x)
+    textGeo.translate(centerOffset, 0, 0)
+
+    return new THREE.Mesh(textGeo, new THREE.MeshBasicMaterial())
+  }
+
+  private async setupGPUParticlesBlendTexture() {
+    // First sampling mesh
+    // const geo1 = new THREE.SphereGeometry(2, 32, 32)
+    // const mat1 = new THREE.MeshBasicMaterial()
+    // const mesh1 = new THREE.Mesh(geo1, mat1)
+    const font = await this.loadFont('/fonts/optimer_bold.typeface.json')
+    const textMesh = this.createTextMesh(font, 'Hello, World!')
+    const textMesh2 = this.createTextMesh(font, 'GPU Particles!!')
+
+    const geo2 = new THREE.TorusKnotGeometry(1, 0.3, 100, 16)
+    const mat2 = new THREE.MeshBasicMaterial()
+    const mesh2 = new THREE.Mesh(geo2, mat2)
+
+    const mat3 = new THREE.MeshBasicMaterial()
+    const pumpkin = await this.loadGLTF('/models/pumpkin.glb')
+    const geos: THREE.BufferGeometry[] = []
+    pumpkin.scene.children[0].position.set(0, 0, 0)
+    pumpkin.scene.children[0].scale.setScalar(0.01)
+
+    pumpkin.scene.children[0].traverse((child) => {
+      child.updateMatrixWorld()
+      if (child instanceof THREE.Mesh && child.geometry) {
+        const attribute = child.geometry.getAttribute('position').clone()
+        const geometry = new THREE.BufferGeometry()
+        if (child.geometry.index) {
+          geometry.setIndex(child.geometry.index.clone())
+        }
+        geometry.setAttribute('position', attribute)
+        geometry.applyMatrix4(child.matrixWorld)
+        geos.push(geometry)
+      }
+    })
+
+    const combinedGeometry = BufferGeometryUtils.mergeGeometries(geos)
+    const combinedMesh = new THREE.Mesh(combinedGeometry, mat3)
+
+    const sampler1 = new MeshSurfaceSampler(textMesh).build()
+    const sampler2 = new MeshSurfaceSampler(mesh2).build()
+    const sampler3 = new MeshSurfaceSampler(combinedMesh).build()
+    const sampler4 = new MeshSurfaceSampler(textMesh2).build()
+
+    const pointGeometry = new THREE.BufferGeometry()
+    const positions = []
+    const pt = new THREE.Vector3()
+
+    const NUM_PARTICLES = 256
+
+    for (let i = 0; i < NUM_PARTICLES * NUM_PARTICLES; ++i) {
+      positions.push(i)
+    }
+
+    // Create data texture from samplers
+    const samplers = [sampler1, sampler2, sampler3, sampler4]
+    const data = new Float32Array(samplers.length * 4 * NUM_PARTICLES * NUM_PARTICLES)
+
+    for (let i = 0; i < samplers.length; ++i) {
+      const curData = new Float32Array(4 * NUM_PARTICLES * NUM_PARTICLES)
+
+      for (let j = 0; j < NUM_PARTICLES * NUM_PARTICLES; ++j) {
+        samplers[i].sample(pt)
+
+        curData[j * 4 + 0] = pt.x
+        curData[j * 4 + 1] = pt.y
+        curData[j * 4 + 2] = pt.z
+        curData[j * 4 + 3] = 0
+      }
+
+      const offset = i * (4 * NUM_PARTICLES * NUM_PARTICLES)
+      data.set(curData, offset)
+    }
+
+    const dataTexture = new THREE.DataArrayTexture(
+      data,
+      NUM_PARTICLES,
+      NUM_PARTICLES,
+      samplers.length,
+    )
+    dataTexture.format = THREE.RGBAFormat
+    dataTexture.type = THREE.FloatType
+    dataTexture.needsUpdate = true
+
+    // TODO: Remember to release the geometries
+
+    pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 1))
+    const diffuseTexture = await this.loadTexture('/textures/circle.png')
+
+    const pointMaterial = new THREE.RawShaderMaterial({
+      uniforms: {
+        u_time: { value: 0 },
+        u_data_texture: { value: dataTexture },
+        u_data_texture_index: { value: 0 },
+        u_resolution: { value: new THREE.Vector2(NUM_PARTICLES, NUM_PARTICLES) },
+        u_diffuse_texture: { value: diffuseTexture },
+      },
+      vertexShader: blendTextureVertexShader,
+      fragmentShader: blendTextureFragmentShader,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+      glslVersion: THREE.GLSL3,
+    })
+
+    this.materials.push(pointMaterial)
+
+    const pointMesh = new THREE.Points(pointGeometry, pointMaterial)
+    pointGeometry.boundingBox = null
+    pointGeometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1000)
+
+    this.scene.add(pointMesh)
   }
 
   private setupGPUParticlesBlendData() {
@@ -184,11 +371,16 @@ class GPUParticlesStatelessScene extends Scene {
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
     this.renderer.render(this.scene, this.camera)
 
-    // const elapsedTime = this.clock.getDelta()
+    const elapsedTime = this.clock.getDelta()
     const totalTime = this.clock.getElapsedTime()
+
+    this.blendTiming += elapsedTime / 5.0
+
+    const blendIndex = this.blendTiming % 4
 
     this.materials.forEach((mat) => {
       mat.uniforms.u_time.value = totalTime
+      mat.uniforms.u_data_texture_index.value = blendIndex
     })
 
     stats.end()
