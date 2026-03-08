@@ -35,6 +35,7 @@ import SingleBladeGrassView from '@/views/SingleBladeGrassView.vue'
 import BasicParticlesView from '@/views/BasicParticlesView.vue'
 import ParticlesBlendingModesView from '@/views/ParticlesBlendingModesView.vue'
 import GPUParticlesStatelessView from '@/views/GPUParticlesStatelessView.vue'
+import GPUParticlesStatefulView from '@/views/GPUParticlesStatefulView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -222,6 +223,11 @@ const router = createRouter({
       path: '/gpu-particles-stateless',
       name: 'gpu-particles-stateless',
       component: GPUParticlesStatelessView,
+    },
+    {
+      path: '/gpu-particles-stateful',
+      name: 'gpu-particles-stateful',
+      component: GPUParticlesStatefulView,
     },
   ],
 })

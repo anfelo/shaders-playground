@@ -8,6 +8,7 @@ import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js'
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js'
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import type { Font } from 'three/addons/loaders/FontLoader.js'
+
 const canvasWrapperElement = ref('div')
 const elementRef = ref<HTMLElement | null>(null)
 let scene: GPUParticlesStatelessScene

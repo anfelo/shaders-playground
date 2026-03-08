@@ -200,6 +200,10 @@ const items: MenuItem[] = [
         label: 'GPU Particles - Stateless',
         route: '/gpu-particles-stateless',
       },
+      {
+        label: 'GPU Particles - Stateful',
+        route: '/gpu-particles-stateful',
+      },
     ],
   },
 ]
