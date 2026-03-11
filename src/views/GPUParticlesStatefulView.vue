@@ -78,6 +78,41 @@ uniform sampler2D u_data_texture;
 
 out vec4 out_Color;
 
+float inverseLerp(float a, float b, float v) {
+  return (v - a) / (b - a);
+}
+
+float remap(float v, float a, float b, float c, float d) {
+  return mix(c, d, inverseLerp(a, b, v));
+}
+
+float gain( float x, float k ) {
+  float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
+  return (x<0.5)?a:1.0-a;
+}
+
+float easeIn(float t, float k) {
+  return pow(t, k);
+}
+
+//------------------------------------------------------------------------------
+
+uint murmurHash12(uvec2 src) {
+    const uint M = 0x5bd1e995u;
+    uint h = 1190494759u;
+    src *= M; src ^= src>>24u; src *= M;
+    h *= M; h ^= src.x; h *= M; h ^= src.y;
+    h ^= h>>13u; h *= M; h ^= h>>15u;
+    return h;
+}
+
+// 1 output, 2 inputs
+float hash12(vec2 src) {
+  uint h = murmurHash12(floatBitsToUint(src));
+  float v = uintBitsToFloat(h & 0x007fffffu | 0x3f800000u) - 1.0;
+  return v * 2.0 - 1.0;
+}
+
 uvec3 murmurHash34(uvec4 src) {
   const uint M = 0x5bd1e995u;
   uvec3 h = uvec3(1190494759u, 2147483647u, 3559788179u);
@@ -92,6 +127,37 @@ vec3 hash34(vec4 src) {
   uvec3 h = murmurHash34(floatBitsToUint(src));
   vec3 v = uintBitsToFloat(h & 0x007fffffu | 0x3f800000u) - 1.0;
   return v * 2.0 - 1.0;
+}
+
+uint murmurHash13(uvec3 src) {
+    const uint M = 0x5bd1e995u;
+    uint h = 1190494759u;
+    src *= M; src ^= src>>24u; src *= M;
+    h *= M; h ^= src.x; h *= M; h ^= src.y; h *= M; h ^= src.z;
+    h ^= h>>13u; h *= M; h ^= h>>15u;
+    return h;
+}
+
+// 1 output, 3 inputs
+float hash13(vec3 src) {
+  uint h = murmurHash13(floatBitsToUint(src));
+  float v = uintBitsToFloat(h & 0x007fffffu | 0x3f800000u) - 1.0;
+  return v * 2.0 - 1.0;
+}
+
+float noise13(vec3 x) {
+  vec3 i = floor(x);
+  vec3 f = fract(x);
+  f = f*f*(3.0-2.0*f);
+
+  return mix(mix(mix( hash13(i+vec3(0.0, 0.0, 0.0)),
+                      hash13(i+vec3(1.0, 0.0, 0.0)),f.x),
+                 mix( hash13(i+vec3(0.0, 1.0, 0.0)),
+                      hash13(i+vec3(1.0, 1.0, 0.0)),f.x),f.y),
+             mix(mix( hash13(i+vec3(0.0, 0.0, 1.0)),
+                      hash13(i+vec3(1.0, 0.0, 1.0)),f.x),
+                 mix( hash13(i+vec3(0.0, 1.0, 1.0)),
+                      hash13(i+vec3(1.0, 1.0, 1.0)),f.x),f.y),f.z);
 }
 
 vec3 noise34(vec4 x) {
@@ -163,7 +229,7 @@ vec3 CalculateAttractorForce(vec3 currentPosition, AttractorParams attractorPara
   return dirToAttractor * attractorForce;
 }
 
-void main(){
+void main() {
   vec3 currentPosition = texture(u_current_buffer, v_uvs).xyz;
   vec3 previousPosition = texture(u_previous_buffer, v_uvs).xyz;
   vec3 deltaPosition = currentPosition - previousPosition;
@@ -175,37 +241,53 @@ void main(){
   // Apply forces
 
   // Apply an attractor force
+  float t = noise13(vec3(v_uvs, u_time)) * 0.5 + 0.5;
+  float attractionRandomness = remap(noise13(vec3(v_uvs, u_time * 0.5)), -1.0, 1.0, 0.0, 1.0);
+  attractionRandomness = gain(attractionRandomness, 8.0);
+  float attractorIntensity = mix(10.0, 1000.0, pow(t, 2.0)) * (noise13(vec3(v_uvs, u_time * 0.5)) * 0.5 + 0.5);
+
+  attractorIntensity = 100.0;
+
   AttractorParams attractorParams = AttractorParams(
-      texture(u_data_texture, v_uvs).xyz, 1.0, 500.0, 1.0);
-  forces += CalculateAttractorForce(currentPosition, attractorParams);
+      texture(u_data_texture, v_uvs).xyz, 0.1, attractorIntensity, 1.0);
+  float distToAttractor = distance(currentPosition, attractorParams.position);
 
   // Create repulsor force
-  vec3 repulsor = vec3(sin(u_time * 0.25) * 8.0, 0.0, 0.0);
-  float distToRepulsor = distance(currentPosition, repulsor);
+  vec3 repulsor = vec3(sin(u_time * 0.25) * 10.0, 0.0, 0.0);
+  float repulsorHash = remap(hash12(v_uvs), -1.0, 1.0, 0.0, 1.0);
+  float repulsorIntensityRandomness = remap(easeIn(repulsorHash, 4.0), 0.0, 1.0, 0.25, 1.0);
   {
     float repulsorRadius = 1.0;
+    float distToRepulsor = distance(currentPosition, repulsor);
     float distOverRadius = distToRepulsor / repulsorRadius;
 
     // Soft repulsor
     float decay = 1.0;
-    float repulsorIntensity = 1000.0;
+    float repulsorIntensity = 2000.0 * repulsorIntensityRandomness;
     float repulsorForce = repulsorIntensity * (
         exp(-distOverRadius * decay));
     vec3 dirToRepulsor = -normalize(repulsor - currentPosition);
     forces += dirToRepulsor * repulsorForce;
+
+    attractorParams.intensity *= max(1.0, distToRepulsor) * 0.1;
   }
 
-  float noiseIntensity = 20.0;
+  forces += CalculateAttractorForce(currentPosition, attractorParams);
+
+
+  float noiseIntensity = 10.0;
   forces += curlNoise(vec4(currentPosition, u_time * 0.5)) * noiseIntensity;
+
+  // forces = vec3(0.0);
 
   vec3 newPosition = currentPosition + deltaPosition * drag + (
       forces * u_time_elapsed * u_time_elapsed);
 
-  out_Color = vec4(newPosition, distToRepulsor);
+  out_Color = vec4(newPosition, distToAttractor);
 }
 `
 
-const statefulVertexShader = `
+const statefulDrawVertexShader = `
 precision highp float;
 precision highp sampler2DArray;
 
@@ -220,6 +302,14 @@ uniform vec2 u_resolution;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 
+float inverseLerp(float a, float b, float v) {
+  return (v - a) / (b - a);
+}
+
+float easeIn(float t, float k) {
+  return pow(t, k);
+}
+
 vec2 unpackUV(float position, vec2 resolution) {
   int index = int(position);
   ivec2 pixelIndex = ivec2(index % int(resolution.x), index / int(resolution.x));
@@ -232,22 +322,29 @@ void main() {
     vec2 uv = unpackUV(position, u_resolution);
 
     vec4 packedCoordinate = texture(u_data_texture, uv);
-
     vec3 localPosition = packedCoordinate.xyz;
+    float distToAttractor = packedCoordinate.w;
 
     vec3 mvPosition = (modelViewMatrix * vec4(localPosition, 1.0)).xyz;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);
-    gl_PointSize = 10.0 / -mvPosition.z;
+
+    float t = easeIn(inverseLerp(0.0, 5.0, distToAttractor), 4.0);
+    gl_PointSize = mix(20.0, 150.0, t) / -mvPosition.z;
 
     vColor = mix(
+      vec4(0.1, 0.4, 1.0, 1.0),
       vec4(1.0),
-      vec4(1.0, 0.0, 0.0, 1.0),
-      smoothstep(2.0, 1.0, packedCoordinate.w));
+      smoothstep(0.25, 0.0, distToAttractor));
+    vColor = mix(
+        vColor,
+        vec4(32.0, 0.25, 0.05, 1.0),
+        smoothstep(0.25, 2.0, distToAttractor));
+    vColor.w = smoothstep(0.25, 2.0, distToAttractor);
 }
 `
 
-const statefulFragmentShader = `
+const statefulDrawFragmentShader = `
 precision highp float;
 
 uniform sampler2D u_diffuse_texture;
@@ -259,10 +356,148 @@ in vec4 vColor;
 void main(){
     vec4 diffuseSample = texture(u_diffuse_texture, gl_PointCoord);
 
-    out_Color = diffuseSample * vColor;
-    out_Color.w *= 0.1;
+    float alpha = diffuseSample.x;
+
+    // out_Color = diffuseSample * vColor;
+    // out_Color.w *= 0.1;
+    out_Color = diffuseSample * vColor * alpha;
+    out_Color.a = alpha * (1.0 - vColor.a);
 }
 `
+
+const bitonicVertexShader = `
+precision highp float;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+in vec3 position;
+
+void main() {
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+
+const bitonicFragmentShader = `
+precision highp float;
+precision highp sampler2D;
+
+uniform sampler2D u_data_texture;
+uniform int stage;
+uniform int offset;
+uniform int stepno;
+
+uniform vec3 u_camera_position;
+
+out vec4 out_Color;
+
+
+//------------------------------------------------------------------------------
+
+ivec2 unpack2D(int index, ivec2 dims) {
+  return ivec2(index % dims.x, index / dims.x);
+}
+
+int pack2D(ivec2 index, ivec2 dims) {
+  return index.x + index.y * dims.x;
+}
+
+//------------------------------------------------------------------------------
+
+
+// Main function for bitonic sorting
+void main() {
+
+  ivec2 dataTextureDims = textureSize(u_data_texture, 0);
+
+  // Cut off the decimal point for next indexing
+  ivec2 pixelIndex = ivec2(gl_FragCoord.xy - 0.5);
+
+  // Find the 1-dimensional index
+  int pixelIndex1D = pack2D(pixelIndex, dataTextureDims);
+
+  // Which texel to compare with, above or below?
+  int csign = (pixelIndex1D % stage < offset) ? 1 : -1;
+
+  // Sort direction
+  int cdir = ((pixelIndex1D / stepno) % 2 == 0) ? 1 : -1;
+
+  // Read the texel at the rendering position
+  vec4 val0 = texelFetch(u_data_texture, ivec2(gl_FragCoord.xy), 0);
+
+  // Read the texel to sort
+  int cmpPixelIndex = csign * offset + pixelIndex1D;
+
+  vec4 val1 = texelFetch(
+      u_data_texture, unpack2D(cmpPixelIndex, dataTextureDims), 0);
+
+  // Values to compare
+  float cmpValue0 = distance(val0.xyz, u_camera_position);
+  float cmpValue1 = distance(val1.xyz, u_camera_position);
+
+  vec4 cmin = (cmpValue0 < cmpValue1) ? val0: val1;  // The smaller one.
+  vec4 cmax = (cmpValue0 <= cmpValue1) ? val1: val0; // The larger one.
+
+  // Compare the sort direction with the data sample direction to decide which value to use.
+  out_Color = (csign == cdir) ? cmax : cmin;
+}
+`
+
+const copyVertexShader = `
+precision highp float;
+
+in vec3 position;
+in vec2 uv;
+
+out vec2 vUV;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+void main() {
+  vUV = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+
+const copyFragmentShader = `
+precision highp float;
+precision highp sampler2D;
+
+uniform sampler2D srcBuffer;
+
+in vec2 vUV;
+
+out vec4 out_Color;
+
+void main() {
+  out_Color = texture(srcBuffer, vUV);
+}
+`
+
+const SHADERS = {
+  'stateful-init': [statefulInitVertexShader, statefulInitFragmentShader],
+  'stateful-update': [statefulUpdateVertexShader, statefulUpdateFragmentShader],
+  'stateful-draw': [statefulDrawVertexShader, statefulDrawFragmentShader],
+  'bitonic-sort': [bitonicVertexShader, bitonicFragmentShader],
+  'copy-pass': [copyVertexShader, copyFragmentShader],
+} as const satisfies Record<string, readonly [string, string]>
+
+type PassName = keyof typeof SHADERS
+type PassUniforms = Record<string, THREE.IUniform<unknown>>
+type PassOptions = {
+  uniforms?: PassUniforms
+} & Partial<THREE.RawShaderMaterial>
+
+type BuffName =
+  | 'particles-0'
+  | 'particles-1'
+  | 'particles-2'
+  | 'sort-0'
+  | 'sort-1'
+  | 'sorted-particles'
+
+const NUM_PARTICLES = 512
 
 class GPUParticlesStatefulScene extends Scene {
   camera = new THREE.PerspectiveCamera()
@@ -275,14 +510,15 @@ class GPUParticlesStatefulScene extends Scene {
 
   private fullscreenScene: THREE.Scene | null = null
   private fullscreenCamera: THREE.OrthographicCamera | null = null
+  private fullscreenQuad: THREE.Mesh<THREE.PlaneGeometry, THREE.RawShaderMaterial> | null = null
+
+  private passes: Partial<Record<PassName, THREE.RawShaderMaterial>> = {}
+  private buffers: Partial<Record<BuffName, THREE.WebGLRenderTarget>> = {}
 
   uiState = {}
 
-  private materials: THREE.ShaderMaterial[] = []
-  private particleBuffers: THREE.WebGLRenderTarget[] = []
   private particleBufferIndex: number = 0
-  particleUpdateQuad: THREE.Mesh<THREE.PlaneGeometry, THREE.RawShaderMaterial> | null = null
-  particleDrawMaterial: THREE.RawShaderMaterial | null = null
+  private sortIndex: number = 0
 
   async init(): Promise<void> {
     super.init()
@@ -333,6 +569,7 @@ class GPUParticlesStatefulScene extends Scene {
 
     // this.camera.position.set(2.6, 2.2, 9.4)
 
+    this.setupFullscreenQuad()
     await this.setupGPUParticlesStateful()
   }
 
@@ -353,19 +590,16 @@ class GPUParticlesStatefulScene extends Scene {
     return new THREE.Mesh(textGeo, new THREE.MeshBasicMaterial())
   }
 
-  private async setupGPUParticlesStateful() {
+  private async createMesh_DataTexture() {
+    const data = new Float32Array(NUM_PARTICLES * NUM_PARTICLES * 4)
+
     // First sampling mesh
     const font = await this.loadFont('/fonts/optimer_bold.typeface.json')
     const textMesh = this.createTextMesh(font, 'GPU Particles!!')
-
     const sampler = new MeshSurfaceSampler(textMesh).build()
 
     const pt = new THREE.Vector3()
-
-    const NUM_PARTICLES = 1024
-    const data = new Float32Array(NUM_PARTICLES * NUM_PARTICLES * 4)
-
-    for (let i = 0; i < NUM_PARTICLES * NUM_PARTICLES; ++i) {
+    for (let i = 0; i < NUM_PARTICLES * NUM_PARTICLES; i++) {
       sampler.sample(pt)
       data[i * 4 + 0] = pt.x
       data[i * 4 + 1] = pt.y
@@ -378,52 +612,99 @@ class GPUParticlesStatefulScene extends Scene {
     dataTexture.type = THREE.FloatType
     dataTexture.needsUpdate = true
 
-    // TODO: Remember to release the geometries
+    return dataTexture
+  }
 
+  private setupFullscreenQuad() {
     this.fullscreenScene = new THREE.Scene()
     this.fullscreenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 
     const fsQuadGeo = new THREE.PlaneGeometry(2, 2)
+    const fsQuad = new THREE.Mesh<THREE.PlaneGeometry, THREE.RawShaderMaterial>(
+      fsQuadGeo,
+      new THREE.RawShaderMaterial(),
+    )
 
-    // Create an initializer shader
-    const matInitialize = new THREE.RawShaderMaterial({
-      uniforms: {
-        u_data_texture: { value: dataTexture },
-      },
-      vertexShader: statefulInitVertexShader,
-      fragmentShader: statefulInitFragmentShader,
-      depthWrite: false,
-      depthTest: false,
-      glslVersion: THREE.GLSL3,
+    this.fullscreenQuad = fsQuad
+    this.fullscreenScene.add(fsQuad)
+  }
+
+  private async createShader(
+    vertexShader: string,
+    fragmentShader: string,
+    uniforms: { [uniform: string]: THREE.IUniform<any> },
+  ) {
+    uniforms = Object.assign(uniforms, {
+      time: { value: 0 },
+      timeElapsed: { value: 0 },
     })
 
+    return new THREE.RawShaderMaterial({
+      uniforms: uniforms,
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      glslVersion: THREE.GLSL3,
+      depthTest: false,
+      depthWrite: false,
+    })
+  }
+
+  private createBuffer(name: BuffName) {
     const opts = {
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
       format: THREE.RGBAFormat,
       type: THREE.FloatType,
     }
-    const fsQuad = new THREE.Mesh<THREE.PlaneGeometry, THREE.RawShaderMaterial>(
-      fsQuadGeo,
-      matInitialize,
-    )
-    this.fullscreenScene.add(fsQuad)
+    this.buffers[name] = new THREE.WebGLRenderTarget(NUM_PARTICLES, NUM_PARTICLES, opts)
+  }
 
-    this.particleBuffers = [
-      new THREE.WebGLRenderTarget(NUM_PARTICLES, NUM_PARTICLES, opts),
-      new THREE.WebGLRenderTarget(NUM_PARTICLES, NUM_PARTICLES, opts),
-      new THREE.WebGLRenderTarget(NUM_PARTICLES, NUM_PARTICLES, opts),
-    ]
+  private async createPass(name: PassName, opts: PassOptions = {}) {
+    const { uniforms = {}, ...materialOverrides } = opts
+    const [vertexShader, fragmentShader] = SHADERS[name]
+    const pass = await this.createShader(vertexShader, fragmentShader, uniforms)
+
+    Object.assign(pass, materialOverrides)
+
+    this.passes[name] = pass
+  }
+
+  private renderPass(name: PassName, bufferName: BuffName) {
+    const buffer = this.buffers[bufferName]
+    const pass = this.passes[name]
+
+    if (!this.fullscreenQuad || !pass || !buffer) {
+      return
+    }
+
+    this.renderer.setRenderTarget(buffer)
+    this.fullscreenQuad.material = pass
+    this.renderer.render(this.fullscreenScene!, this.fullscreenCamera!)
+    this.renderer.setRenderTarget(null)
+  }
+
+  private async setupGPUParticlesStateful() {
+    const diffuseTexture = await this.loadTexture('/textures/circle.png')
+    const dataTexture = await this.createMesh_DataTexture()
+
+    // Create an initialize shader
+    await this.createPass('stateful-init', {
+      uniforms: {
+        u_data_texture: { value: dataTexture },
+      },
+    })
+
+    this.createBuffer('particles-0')
+    this.createBuffer('particles-1')
+    this.createBuffer('particles-2')
     this.particleBufferIndex = 0
 
-    for (let i = 0; i < this.particleBuffers.length; ++i) {
-      this.renderer.setRenderTarget(this.particleBuffers[i])
-      this.renderer.render(this.fullscreenScene, this.fullscreenCamera)
-    }
-    this.renderer.setRenderTarget(null)
+    this.renderPass('stateful-init', 'particles-0')
+    this.renderPass('stateful-init', 'particles-1')
+    this.renderPass('stateful-init', 'particles-2')
 
     // Create an update shader
-    const matUpdate = new THREE.RawShaderMaterial({
+    await this.createPass('stateful-update', {
       uniforms: {
         u_current_buffer: { value: null },
         u_previous_buffer: { value: null },
@@ -431,15 +712,7 @@ class GPUParticlesStatefulScene extends Scene {
         u_time_elapsed: { value: 0 },
         u_data_texture: { value: dataTexture },
       },
-      vertexShader: statefulUpdateVertexShader,
-      fragmentShader: statefulUpdateFragmentShader,
-      depthWrite: false,
-      depthTest: false,
-      glslVersion: THREE.GLSL3,
     })
-
-    this.particleUpdateQuad = fsQuad
-    this.particleUpdateQuad.material = matUpdate
 
     // Create a drawing shader
     const pointGeometry = new THREE.BufferGeometry()
@@ -451,23 +724,23 @@ class GPUParticlesStatefulScene extends Scene {
 
     pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 1))
 
-    const diffuseTexture = await this.loadTexture('/textures/circle.png')
-
-    const matDraw = new THREE.RawShaderMaterial({
+    await this.createPass('stateful-draw', {
       uniforms: {
         u_time: { value: 0 },
-        u_data_texture: { value: this.particleBuffers[0].texture },
+        u_data_texture: { value: null },
         u_resolution: { value: new THREE.Vector2(NUM_PARTICLES, NUM_PARTICLES) },
         u_diffuse_texture: { value: diffuseTexture },
       },
-      vertexShader: statefulVertexShader,
-      fragmentShader: statefulFragmentShader,
       transparent: true,
-      depthWrite: false,
-      depthTest: false,
-      blending: THREE.AdditiveBlending,
-      glslVersion: THREE.GLSL3,
+      // blending: THREE.AdditiveBlending,
+      // blending: THREE.NormalBlending,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.OneFactor,
+      blendDst: THREE.OneMinusSrcAlphaFactor,
     })
+
+    const matDraw = this.passes['stateful-draw']
 
     const pointMesh = new THREE.Points(pointGeometry, matDraw)
     pointGeometry.boundingBox = null
@@ -475,33 +748,60 @@ class GPUParticlesStatefulScene extends Scene {
 
     this.scene.add(pointMesh)
 
-    this.particleDrawMaterial = matDraw
+    // Sort passes
+    await this.createPass('bitonic-sort', {
+      uniforms: {
+        u_data_texture: { value: null },
+        stage: { value: 0 },
+        offset: { value: 0 },
+        stepno: { value: 0 },
+        u_camera_position: { value: new THREE.Vector3() },
+      },
+    })
 
-    this.materials.push(matDraw)
-    this.materials.push(matUpdate)
+    this.createBuffer('sort-0')
+    this.createBuffer('sort-1')
+    this.sortIndex = 0
+
+    this.createBuffer('sorted-particles')
+
+    // Create the copy pass
+    await this.createPass('copy-pass', {
+      uniforms: {
+        srcBuffer: { value: null },
+      },
+    })
   }
 
   private animate(_time: DOMHighResTimeStamp, _frame: XRFrame): void {
-    if (!this.particleUpdateQuad) {
-      return
-    }
-
     const elapsedTime = this.clock.getDelta()
     const totalTime = this.clock.getElapsedTime()
 
-    this.materials.forEach((mat) => {
-      mat.uniforms.u_time.value = totalTime
-    })
+    for (const pass of Object.values(this.passes)) {
+      if (!pass) {
+        continue
+      }
 
-    const currentBuffer = this.particleBuffers[this.particleBufferIndex]
-    const previousBuffer = this.particleBuffers[(this.particleBufferIndex + 2) % 3]
-    this.particleBufferIndex = (this.particleBufferIndex + 1) % 3
+      const uniforms = pass.uniforms as Record<string, THREE.IUniform<unknown>>
 
-    const updateMaterial = this.particleUpdateQuad.material
-    updateMaterial.uniforms.u_current_buffer.value = currentBuffer.texture
-    updateMaterial.uniforms.u_previous_buffer.value = previousBuffer.texture
-    updateMaterial.uniforms.u_time_elapsed.value = elapsedTime
-    updateMaterial.needsUpdate = true
+      if (uniforms.u_time) {
+        uniforms.u_time.value = totalTime
+      }
+
+      if (uniforms.u_time_elapsed) {
+        uniforms.u_time_elapsed.value = elapsedTime
+      }
+    }
+
+    const i1 = this.particleBufferIndex
+    const i0 = (i1 + 2) % 3
+    this.particleBufferIndex = (i1 + 1) % 3
+
+    const matUpdate = this.passes['stateful-update']
+    const particlesBuff0 = ('particles-' + i0) as BuffName
+    const particlesBuff1 = ('particles-' + i1) as BuffName
+    matUpdate!.uniforms.u_current_buffer.value = this.buffers[particlesBuff1]!.texture
+    matUpdate!.uniforms.u_previous_buffer.value = this.buffers[particlesBuff0]!.texture
 
     this.renderer.render(this.scene, this.camera)
     this.onRender()
@@ -509,13 +809,74 @@ class GPUParticlesStatefulScene extends Scene {
     stats.end()
   }
 
-  onRender(): void {
-    this.renderer.setRenderTarget(this.particleBuffers[this.particleBufferIndex])
-    this.renderer.render(this.fullscreenScene!, this.fullscreenCamera!)
-    this.renderer.setRenderTarget(null)
+  private copyBuffer(srcName: BuffName, dstName: BuffName) {
+    const srcBuffer = this.buffers[srcName]
+    const dstBuffer = this.buffers[dstName]
+    const copy = this.passes['copy-pass']
+    copy!.uniforms.srcBuffer.value = srcBuffer!.texture
 
-    this.particleDrawMaterial!.uniforms.u_data_texture.value =
-      this.particleBuffers[this.particleBufferIndex].texture
+    this.renderPass('copy-pass', dstName)
+  }
+
+  private sortParticles() {
+    const bitonicSortMat = this.passes['bitonic-sort']
+
+    if (!bitonicSortMat) {
+      return
+    }
+
+    // Copy the particle buffer to the sort buffer
+    let srcBuffName = ('particles-' + this.particleBufferIndex) as BuffName
+    const dstBuffName = ('sort-' + this.sortIndex) as BuffName
+    this.copyBuffer(srcBuffName, dstBuffName)
+
+    for (let i = 0; i < 1000; ++i) {
+      let step = i
+      let rank
+      for (rank = 0; rank < step; ++rank) {
+        step -= rank + 1
+      }
+
+      let stepno = 1 << (rank + 1)
+      let offset = 1 << (rank - step)
+      let stage = 2 * offset
+
+      if (rank >= Math.log2(NUM_PARTICLES * NUM_PARTICLES)) {
+        break
+      }
+
+      // Draw the sort material
+      const target = ('sort-' + ((this.sortIndex + 1) % 2)) as BuffName
+      const sortBuffName = ('sort-' + this.sortIndex) as BuffName
+      const sourceBuffer = this.buffers[sortBuffName]
+
+      bitonicSortMat.uniforms.u_data_texture.value = sourceBuffer!.texture
+      bitonicSortMat.uniforms.stage.value = stage
+      bitonicSortMat.uniforms.offset.value = offset
+      bitonicSortMat.uniforms.stepno.value = stepno
+      bitonicSortMat.uniforms.u_camera_position.value.copy(this.camera.position)
+      bitonicSortMat.needsUpdate = true
+
+      this.renderPass('bitonic-sort', target)
+
+      this.sortIndex = (this.sortIndex + 1) % 2
+    }
+
+    srcBuffName = ('sort-' + this.sortIndex) as BuffName
+    this.copyBuffer(dstBuffName, 'sorted-particles')
+  }
+
+  onRender(): void {
+    const bufferName = ('particles-' + this.particleBufferIndex) as BuffName
+    this.renderPass('stateful-update', bufferName)
+
+    this.sortParticles()
+
+    // const currentParticleBuffer = this.buffers[bufferName]
+    const sortedParticleBuffer = this.buffers['sorted-particles']
+
+    const matDraw = this.passes['stateful-draw']
+    matDraw!.uniforms.u_data_texture.value = sortedParticleBuffer!.texture
   }
 
   private initDebugUI() {}
